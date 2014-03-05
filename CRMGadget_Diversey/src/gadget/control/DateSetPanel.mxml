@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Panel
+	xmlns:control="gadget.control.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml"  
+	titleStyleName="panelHeader" verticalScrollPolicy="off"
+	horizontalScrollPolicy="off"
+	creationComplete="init();"
+	>
+	
+	<mx:Style>
+		.DataGrid{
+			border-bottom:1px;
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import gadget.i18n.i18n;
+			import gadget.util.ImageUtils;
+			import gadget.util.Utils;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.HBox;
+			import mx.controls.Button;
+			import mx.controls.Label;
+			import mx.controls.LinkButton;
+			import mx.events.ListEvent;
+			
+			public var previousDayClick:Function;
+			public var nextDayClick:Function;
+			public var previousMonthClick:Function;
+			public var nextMonthClick:Function;
+			private var labelDay:Label;
+			
+			[Bindable] public var dataProvider:ArrayCollection;
+				
+			private const DATESETPANEL_TOOLTIP_PREVIOUS_MONTH:String = 'DATESETPANEL_TOOLTIP_PREVIOUS_MONTH';
+			private const DATESETPANEL_TOOLTIP_PREVIOUS_DAY:String = 'DATESETPANEL_TOOLTIP_PREVIOUS_DAY';
+			private const DATESETPANEL_TOOLTIP_NEXT_DAY:String = 'DATESETPANEL_TOOLTIP_NEXT_DAY';
+			private const DATESETPANEL_TOOLTIP_NEXT_MONTH:String = 'DATESETPANEL_TOOLTIP_NEXT_MONTH';
+			private const DATESETPANEL_LABEL_TEXT_NO_APPOINTMENT:String = 'DATESETPANEL_LABEL_TEXT_NO_APPOINTMENT';
+			
+			private function init():void{
+				var hBox:HBox = new HBox();
+				hBox.setStyle("paddingTop", "3");
+				hBox.visible = true;
+				hBox.includeInLayout = true;
+				hBox.width = this.titleBar.width;
+				hBox.height = this.titleBar.height;				
+				hBox.addChild(createButton(ImageUtils.previousDayIcon,i18n._(DATESETPANEL_TOOLTIP_PREVIOUS_MONTH),previousMonthClick));
+				hBox.addChild(createButton(ImageUtils.previousDayIcon,i18n._(DATESETPANEL_TOOLTIP_PREVIOUS_DAY),previousDayClick));
+				
+				labelDay = new Label();
+				labelDay.setStyle("fontSize", "12");
+				labelDay.setStyle("fontWeight", "bold");
+				labelDay.setStyle("textAlign", "center");
+				labelDay.percentWidth = 100;
+				hBox.addChild(labelDay);
+							
+				hBox.addChild(createButton(ImageUtils.nextDayIcon,i18n._(DATESETPANEL_TOOLTIP_NEXT_DAY),nextDayClick));
+				hBox.addChild(createButton(ImageUtils.nextDayIcon,i18n._(DATESETPANEL_TOOLTIP_NEXT_MONTH),nextMonthClick));
+							
+				hBox.name = "hboxComponent"
+				this.titleBar.addChild(hBox);
+			}
+			
+			
+			public function createButton(_icon:Class,_tootip:String, _clikHandler:Function):LinkButton{
+				var button:LinkButton = new LinkButton();
+				button.setStyle("icon", _icon);
+				button.toolTip = _tootip;
+				button.addEventListener(MouseEvent.CLICK, _clikHandler);
+				return button;
+			}
+			
+			public function setTextLabel(text:String, date:Date):void{
+				labelDay.text = text;
+				labelDay.data = date;
+			}
+			
+			public function getDataLabel():Object{
+				return labelDay.data;
+			}
+
+			
+			
+		]]>
+	</mx:Script>
+	
+	<mx:ViewStack id="vs" width="100%" height="100%">
+		<mx:HBox width="100%">
+			<mx:DataGrid 
+				id="tileList"
+				width="100%"
+				height="100%"
+				dataProvider="{dataProvider}"
+				borderStyle="inset"
+				>
+				<mx:columns>
+					<mx:DataGridColumn>
+						<mx:headerRenderer>
+							<mx:Component>
+								<mx:HBox paddingLeft="8" horizontalGap="20">
+									<mx:Script>
+										<![CDATA[
+											import gadget.i18n.i18n;
+											//CRO 05.01.2011
+											private const DATESETPANEL_LABEL_TEXT_START_TIME:String = 'GLOBAL_START_TIME';
+											private const DATESETPANEL_LABEL_TEXT_END_TIME:String = 'GLOBAL_ENDTIME';
+											private const DATESETPANEL_LABEL_TEXT_SUBJECT:String = 'GLOBAL_SUBJECT';
+											private const DATESETPANEL_LABEL_TEXT_MARKER:String = 'DATESETPANEL_LABEL_TEXT_MARKER';
+										]]>
+									</mx:Script>
+									<mx:Label text="{i18n._(DATESETPANEL_LABEL_TEXT_START_TIME)}" />
+									<mx:Label text="" />
+									<mx:Label text="{i18n._(DATESETPANEL_LABEL_TEXT_SUBJECT)}" width="100%" />
+									<mx:Label text="{i18n._(DATESETPANEL_LABEL_TEXT_MARKER)}" />
+								</mx:HBox>
+							</mx:Component>
+						</mx:headerRenderer>
+						<mx:itemRenderer>
+							<mx:Component>
+								<mx:HBox paddingLeft="8" horizontalGap="20">
+									<mx:Script>
+										<![CDATA[
+											import gadget.util.DateUtils;
+											import gadget.util.GUIUtils;
+											import gadget.util.StringUtils;
+											
+											private function getLabelTime(data:String):String{
+												var date:Date = DateUtils.guessAndParse(data);
+												return DateUtils.format(new Date(date.getTime()+DateUtils.getCurrentTimeZone(date)*GUIUtils.millisecondsPerHour), DateUtils.getCurrentUserDatePattern().timeFormat);
+											}
+											
+										]]>
+									</mx:Script>
+									<mx:Label text="{getLabelTime(data.StartTime)}" />
+									<mx:Image source="{data.icon}" />
+									<mx:Label text="{StringUtils.reduceTextLength(data.Subject,25)}" width="100%" />
+									<mx:Label id="markLabel" text="{data.mark}" />
+								</mx:HBox>
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:DataGridColumn>
+				</mx:columns>
+			</mx:DataGrid>
+		</mx:HBox>
+		<mx:HBox width="100%">
+			<mx:Label text="{i18n._(DATESETPANEL_LABEL_TEXT_NO_APPOINTMENT)}" />
+		</mx:HBox>
+		<!--
+		<mx:TileList id="tileList"
+		itemRenderer="gadget.control.ItemRenderDateSet"
+		dataProvider="{dataProvider}"
+		textAlign="left"
+		columnCount="1"
+		borderStyle="solid"
+		rowHeight="35"
+		width="100%"
+		height="100%"
+		/>
+		-->
+	</mx:ViewStack>
+</mx:Panel>

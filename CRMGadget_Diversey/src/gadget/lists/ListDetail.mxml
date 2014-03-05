@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="utf-8"?>
+<control:ButtonPanel 
+	xmlns:control="gadget.control.*"
+	xmlns:mx="http://www.adobe.com/2006/mxml"  
+	titleStyleName="panelHeader" verticalScrollPolicy="off"
+	creationComplete="init()"
+	borderStyle="solid" backgroundColor="#F3F3F3" >
+	<mx:Style>
+		.myStyle{
+			padding-top: 6;
+			padding-right: 6;
+		}
+	</mx:Style>
+	<mx:Script>
+		<![CDATA[
+			import com.adobe.images.PNGEncoder;
+			
+			import gadget.control.ArrowSkin;
+			import gadget.control.BrowseLocalFileDialog;
+			import gadget.dao.DAOUtils;
+			import gadget.dao.Database;
+			import gadget.i18n.i18n;
+			import gadget.service.PicklistService;
+			import gadget.service.RightService;
+			import gadget.service.UserService;
+			import gadget.util.DateUtils;
+			import gadget.util.FieldUtils;
+			import gadget.util.FileBrowse;
+			import gadget.util.GUIUtils;
+			import gadget.util.ImageUtils;
+			import gadget.util.OOPS;
+			import gadget.util.StringUtils;
+			import gadget.util.Utils;
+			import gadget.window.WindowManager;
+			
+			import mx.collections.ArrayCollection;
+			import mx.containers.FormItem;
+			import mx.containers.VBox;
+			import mx.controls.Alert;
+			import mx.controls.Button;
+			import mx.controls.Image;
+			import mx.controls.Label;
+			import mx.controls.LinkButton;
+			import mx.controls.TextInput;
+			import mx.controls.dataGridClasses.DataGridColumn;
+			import mx.graphics.codec.PNGEncoder;
+			import mx.managers.DragManager;
+		    
+			[Bindable] public var item:Object;
+			public var entity:String;
+
+			private var btnAdd:LinkButton;
+			private var btnDelete:LinkButton;
+			//CRO 05.01.2011
+			private const LISTDETAIL_TASKS_DATAGRID_COLUMN_SUBJECT:String = "GLOBAL_SUBJECT";
+			private const LISTDETAIL_TASKS_DATAGRID_COLUMN_DUEDATE:String = "LISTDETAIL_TASKS_DATAGRID_COLUMN_DUEDATE";
+			private const LISTDETAIL_TASKS_DATAGRID_COLUMN_PRIORITY:String = "GLOBAL_PRIORITY";
+			private const LISTDETAIL_TASKS_DATAGRID_COLUMN_STATUS:String = "LISTDETAIL_TASKS_DATAGRID_COLUMN_STATUS";
+			private const LISTDETAIL_TASKS_DATAGRID_COLUMN_ALIAS:String = "LISTDETAIL_TASKS_DATAGRID_COLUMN_ALIAS";
+			//CRO 05.01.2011
+			private const LISTDETAIL_ATTACHMENTS_DATAGRID_COLUMN_FILENAME:String = "GLOBAL_FILENAME";
+			private const GLOBAL_DELETE:String = "GLOBAL_DELETE";
+			private const GLOBAL_ADD:String = "GLOBAL_ADD";
+			private const LISTDETAIL_ATTACHMENTS_ALERT_MSG_DELETE:String = "GLOBAL_ATTACHMENTS_ALERT_MSG_DELETE";
+			private const LISTDETAIL_ATTACHMENTS_ALERT_MSG_OPEN:String = "LISTDETAIL_ATTACHMENTS_ALERT_MSG_OPEN";
+			private const LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_ATTACHMENT:String = "LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_ATTACHMENT";
+			private const LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_IMAGE:String = "LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_IMAGE";
+
+			private const LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_LAST_NAME:String = "LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_LAST_NAME";
+			private const LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_FIRST_NAME:String = "LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_FIRST_NAME";
+			private const LISTDETAIL_TAB_DETAIL:String = "LISTDETAIL_TAB_DETAIL";
+			private const LISTDETAIL_TAB_TASK:String = "LISTDETAIL_TAB_TASK";
+			private const LISTDETAIL_TAB_ATTACHMENT:String = "GLOBAL_ATTACHMENTS";
+			
+			
+			private static const EXTENSION_IMAGE_FILE:Array = [".PNG", ".png", ".GIF", ".gif", ".jpg", ".JPG"];
+	        
+	        public function showEmail(obj:Object,property:String):Boolean {
+				return obj != null && obj[property] != null && obj[property] != ''
+			}
+			
+			public function refreshImage(img:Image):void {
+				if (item && item.picture){
+					img.visible = true;
+					img.load(item.picture);
+				} else if (item == null) {
+					img.visible = false;
+				} else{
+					img.load(ImageUtils.noPhoto);
+					img.visible = true;
+					//Fixed bug #771 CRO #844
+					if(item["gadget_type"] == Database.contactDao.entity){
+						if(item["MrMrs"] == "Mr."){
+							img.load(ImageUtils.manIcon);
+						}else if(item["MrMrs"] == "Miss." || item["MrMrs"] == "Ms." || item["MrMrs"] == "Mrs."){
+							img.load(ImageUtils.womanIcon);
+						}else if(item["MrMrs"] == "Dr."){
+							img.load(ImageUtils.doctorIcon);
+						}	
+					}
+					
+				}
+			}
+			
+			public function init():void {
+				
+				vsFirstTabWidth();
+				
+				form.removeAllChildren();
+				formRight.removeAllChildren();
+				var canUpdate:Boolean = RightService.canUpdate(entity);
+				var count:int = 0;
+				var lineCount:int = 6;
+				
+				if(entity == "Opportunity"){
+					lineCount = 4;
+				}				
+				for each (var viewLayout:Object in Database.viewLayoutDAO.selectAll(entity)) {
+					count++;
+					if(count < lineCount * 2){
+						var fieldName:String = viewLayout.element_name;
+						var formItem:FormItem = new FormItem();
+						var field:Object = FieldUtils.getField(entity, fieldName);
+						formItem.label = field == null ? "" : field.display_name;
+						
+						//formItem has only if it's Date and DateTime datatype.
+						if(field !=null ){
+							if(field.data_type == 'Date'){
+								formItem.data = {'ColumnName':field.element_name, 'IsDateTime': false};
+							}else if(field.data_type == 'Date/Time'){
+								formItem.data = {'ColumnName':field.element_name, 'IsDateTime': true};
+							}
+						}
+						
+						if (fieldName.indexOf("Email") != -1 || fieldName.indexOf("WebSite") != -1) {
+							var linkButton:LinkButton = new LinkButton();
+							linkButton.label = '';
+							linkButton.data = fieldName;
+							formItem.addChild(linkButton);
+						}else {
+							var textInput:TextInput = new TextInput();
+							textInput.styleName = "readonly";
+							textInput.editable = false;
+							textInput.text = '';
+							textInput.data = fieldName;
+							formItem.addChild(textInput);
+						}
+
+						if(count < lineCount){
+							form.addChild(formItem);
+						}else{
+							formRight.addChild(formItem);
+						}
+					}else{
+						break;
+					}
+				} 
+
+				if(entity == 'Contact'){
+					var image:Image = new Image();
+					image.setStyle('top', 0);
+					image.setStyle('bottom', 0);
+					image.setStyle('left', 8);
+					image.setStyle('right', 0);
+					image.setStyle('horizontalAlign', 'right');
+					image.setStyle('verticalAlign', 'middle');
+					image.width = 108;
+					image.height = 100;
+					image.visible = false;
+					canvasPicture.height = 100;
+					canvasPicture.width = 100;
+					canvasPicture.addChild(image);
+				}	
+				
+				if(entity=="Campaign" && viewstack.getChildren().length == 3){
+					var canvasAddLead:Canvas = new Canvas();
+					canvasAddLead.label = "Leads";
+					canvasAddLead.percentHeight = 100;
+					canvasAddLead.percentWidth = 100;
+					var leadsgrid:DataGrid = new DataGrid();
+					leadsgrid.setStyle('top', 0);
+					leadsgrid.setStyle('left', 8);
+					leadsgrid.setStyle('right', 8);
+					leadsgrid.setStyle('bottom', 8);
+					var columns:ArrayCollection = new ArrayCollection();
+					var column:DataGridColumn = new DataGridColumn();
+					column.dataField = "LeadLastName";
+					column.headerText = i18n._(LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_LAST_NAME);
+					columns.addItem(column);
+					column = new DataGridColumn();
+					column.dataField = "LeadFirstName";
+					column.headerText = i18n._(LISTDETAIL_DATAGRIDCOLUMN_HEADERTEXT_LEAD_FIRST_NAME);
+					columns.addItem(column);
+					leadsgrid.columns = columns.source;
+					canvasAddLead.addChild(leadsgrid);
+					viewstack.addChild(canvasAddLead);
+				}
+				
+				if (entity=="Activity") {
+					if (viewstack.getChildren().length >= 2 && (viewstack.getChildAt(1) as Canvas).id == "taskCanvas") {
+						viewstack.removeChildAt(1);
+					}
+				}
+
+				
+				if (entity == "Product") {
+					if (viewstack.getChildren().length >= 3 && (viewstack.getChildAt(2) as Canvas).id == "attachmentCanvas") {
+						viewstack.removeChildAt(2);
+					}
+				}
+				
+				initDragDropDataGrid(canUpdate);
+				
+			
+
+				
+			}
+			
+			
+			private function initDragDropDataGrid(enable:Boolean):void 
+			{
+				if(enable){
+					//register for the drag enter event
+					attachmentCanvas.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragIn);
+					//register for the drag drop event
+					attachmentCanvas.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDragDrop);
+				}
+				canvasPicture.addEventListener(NativeDragEvent.NATIVE_DRAG_ENTER, onDragPictureIn);
+				canvasPicture.addEventListener(NativeDragEvent.NATIVE_DRAG_DROP, onDragDropPicture);
+			}
+			
+			private function onDragPictureIn(event:NativeDragEvent):void{
+				//check and see if files are being drug in
+				if(event.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					//get the array of files
+					var files:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+					
+					//make sure only one file is dragged in (i.e. this app doesn’t support dragging in multiple files)
+					if(files.length == 1)
+					{
+						//accept the drag action
+						var file:File = files[0] as File;
+						if(EXTENSION_IMAGE_FILE.indexOf(file.type)>-1){
+							DragManager.acceptDragDrop(canvasPicture);
+						}
+					}
+				}
+			}
+			
+			private function onDragDropPicture(event:NativeDragEvent):void{
+				var arr:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+				if(item!=null){
+					var file:File = arr[0] as File;
+					var data:ByteArray = Utils.getContentFile(file);
+					Database.contactDao.updateImage(data, item);
+
+					var img : Image = canvasPicture.getChildAt(0) as Image;
+					//img.source = data
+					img.source = item.picture;
+					(this.parentDocument as List).filterData();
+				}else{
+					Alert.show(i18n._(LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_IMAGE), "", Alert.OK, this);
+				}
+			}
+			
+			private function onDragIn(event:NativeDragEvent):void{
+				//check and see if files are being drug in
+				if(event.clipboard.hasFormat(ClipboardFormats.FILE_LIST_FORMAT))
+				{
+					//get the array of files
+					var files:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+					
+					//make sure only one file is dragged in (i.e. this app doesn’t support dragging in multiple files)
+					if(files.length == 1)
+					{
+						//accept the drag action
+						DragManager.acceptDragDrop(attachmentCanvas);
+					}
+				}
+			}
+			
+			private function onDragDrop(event:NativeDragEvent):void{
+				var arr:Array = event.clipboard.getData(ClipboardFormats.FILE_LIST_FORMAT) as Array;
+				if(item!=null){
+					upload(arr[0] as File);
+				} else {
+					Alert.show(i18n._(LISTDETAIL_DRAGDROP_ALERT_MSG_ADD_ATTACHMENT), "", Alert.OK ,this);
+				} 
+			}
+			
+			private static function shorten(s:String):String {
+				if(StringUtils.isEmpty(s)) return "";
+				if (s.indexOf("/") == -1) {
+					return s;
+				}
+				return s.substring(0, s.indexOf("/"));
+			}
+			
+			public function clearData():void{
+				var children:Array = form.getChildren();
+				children = children.concat(formRight.getChildren());
+				for(var index:String in children){
+					var formItem:FormItem = children[index];
+					var formControl:DisplayObject = formItem.getChildAt(0);
+					var property:String;
+					if(formControl is TextInput) {  //TextInput Field
+						var textInput:TextInput = formControl as TextInput;
+						textInput.text = "";
+					} else if(formControl is LinkButton) { //LinkButton Field
+						var linkButton:LinkButton = formControl as LinkButton;
+						linkButton.label = "";
+						linkButton.setStyle("icon", null);
+					}
+				}
+				this.title = "";
+				
+				switch(entity){
+					case "Account":
+					case "Contact":
+					case "Campaign":
+					case "Custom Object 1":
+					case "Lead":
+					case "Opportunity":
+					case "Service Request":
+				    case "CustomObject14":
+					case "Custom Object 2":
+						var tasksDataGrid:DataGrid = (viewstack.getChildAt(1) as Canvas).getChildAt(0) as DataGrid;
+						tasksDataGrid.dataProvider = null;
+						var attachDataGrid:DataGrid = ((viewstack.getChildAt(2) as Canvas).getChildAt(0) as HBox).getChildAt(0) as DataGrid;
+						attachDataGrid.dataProvider = null;
+						if(entity=="Contact"){
+							var image:Image = (canvasPicture.getChildAt(0) as Image);
+							image.source = null;
+							image.setVisible(false);
+						}else if(entity=="Campaign"){
+							var leadDataGrid:DataGrid = (viewstack.getChildAt(3) as Canvas).getChildAt(0) as DataGrid;
+							leadDataGrid.dataProvider = null;
+						}else if(entity=="Opportunity"){
+							((viewstack.getChildAt(0) as VBox).getChildAt(1) as HBox).setVisible(false);							
+						}
+						break;
+					case "Product":
+						var tasksProductDataGrid:DataGrid = (viewstack.getChildAt(1) as Canvas).getChildAt(0) as DataGrid;
+						tasksProductDataGrid.dataProvider = null;
+						break;
+				}
+			}
+			
+			public function loadData():void {
+				if (item == null){
+					// CH : clear when no select
+					clearData();
+					return;
+				}
+				
+				var currentUserDatePattern:Object = DateUtils.getCurrentUserDatePattern();
+				
+				var canUpdate:Boolean = RightService.canUpdate(entity);
+				deleteAttachment.enabled = canUpdate;
+				addAttachment.enabled = canUpdate;
+				
+				this.title = StringUtils.reduceTextLength(Utils.getName(item), 40);
+				var children:Array = form.getChildren();
+				children = children.concat(formRight.getChildren());
+				for(var index:String in children){
+					var formItem:FormItem = children[index];
+					var formControl:DisplayObject = formItem.getChildAt(0);
+					var property:String;
+					if(formControl is TextInput) {  //TextInput Field
+						var textInput:TextInput = formControl as TextInput;
+						property = textInput.data as String;
+						var parts:Array = property.split("|");
+						var data:String = "";
+
+						for each (var part:String in parts) {
+							if (item[part] != null) {
+								if (data.length > 0) {
+									data += " ";
+								}
+								var picklist:ArrayCollection = PicklistService.getPicklist(entity, part);
+								var country:String = Utils.getLabelCountry(picklist,item[part]);
+								if(picklist != null && country != ""){
+									data = country;
+								}else{
+									data += item[part];
+								}
+							}
+						}
+						
+						var fieldInfo:Object = formItem.data;
+						if(fieldInfo != null && data){ //We do format only for Date and DateTime datatype only
+							var format:String = currentUserDatePattern.dateFormat + ( fieldInfo.IsDateTime ? ' ' + currentUserDatePattern.timeFormat : '' );
+							var date:Date = DateUtils.guessAndParse(data);
+							data = DateUtils.format(date, format);
+						}
+						
+						textInput.text = data;
+					} else if(formControl is LinkButton) { //LinkButton Field
+						var linkButton:LinkButton = formControl as LinkButton;
+						property = linkButton.data as String;
+						linkButton.label = item[property];
+						if(property.indexOf('Email') != -1){
+							linkButton.visible = showEmail(item,property);
+							linkButton.setStyle("icon", ImageUtils.emailIcon);
+							linkButton.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void{
+								Utils.openURL('mailto:' + item[(event.currentTarget as LinkButton).data], '_blank');
+							});
+						}else if(property.indexOf('WebSite') != -1){
+							linkButton.visible = showEmail(item,property);
+							linkButton.setStyle("icon", ImageUtils.websiteIcon);
+							linkButton.addEventListener(MouseEvent.CLICK, function(event:MouseEvent):void{
+								var url:String = item[(event.currentTarget as LinkButton).data];
+								var hyperText:String = url.indexOf("http://") != -1? "" : url.indexOf("https://") != -1 ? "" : "http://";
+								Utils.openURL(hyperText + url, '_blank');
+							});
+						}
+					}
+				}
+				
+				
+				// Add Activity to Grid
+				datagrid.dataProvider = Database.activityDao.findRelatedActivities(entity, item[DAOUtils.getOracleId(entity)]);
+				
+				attachmentDataGrid.dataProvider = Database.attachmentDao.selectAttachment(entity, item.gadget_id);
+				
+				switch(entity){
+					case 'Contact':
+						var image:Image = canvasPicture.getChildAt(0) as Image;
+						refreshImage(image);
+						break;
+					case 'Opportunity':
+						var records:ArrayCollection = Database.salesStageDao.findAll();
+						var statusRed:Boolean = true;
+						statusProgress.visible = true;
+						statusProgress.removeAllChildren();
+						var mainWidth:int = 0;
+						var previous:String = null;
+						for (var i:int=0; i<records.length; i++) {
+							var s:Object = records[i];
+							// small hack to manage "Closed/Won" and "Closed/Lost" stages.
+							if (shorten(s.name) == previous) {
+								continue;
+							}
+							previous = shorten(s.name);
+	
+							var h:HBox = new HBox();
+							var lbl:Label = new Label();
+							
+							lbl.setStyle("color", 0xFFFFFF);
+							lbl.setStyle("fontWeight", "bold");
+							lbl.text = shorten(s.name);
+							h.width = (measureText(shorten(s.name)) as TextLineMetrics).width + 20; //returnSize(s.name as String);
+							mainWidth += h.width;
+							
+							h.setStyle("verticalAlign", "middle");
+							h.setStyle("horizontalAlign", "right");
+							h.setStyle("borderSkin", ArrowSkin);
+							
+							lbl.height = 18;
+							if(statusRed){
+								// Red
+								h.height = 36;
+								//#1065 CRO
+								if( UserService.SIEMEN==UserService.getCustomerId()){
+									h.setStyle("backgroundColor", 0x53da3f);
+								}else{
+									h.setStyle("backgroundColor", 0xFF0000);
+								}
+							}else{
+								// Blue
+								h.height = 28;
+								if( UserService.SIEMEN==UserService.getCustomerId()){
+									h.setStyle("backgroundColor", 0xcfdc3c);
+								}else{
+									h.setStyle("backgroundColor", 0x4F81BD);
+								}
+							}
+							
+							if(shorten(s.name)==shorten(item.SalesStage)){
+								statusRed = false;
+							}
+							
+							h.addChild(lbl);
+							statusProgress.addChild(h);
+						}
+						statusProgress.width = mainWidth + (10 * records.length);
+						break;
+					case 'Campaign':
+						var canvasAddLead:Canvas = viewstack.getChildAt(3) as Canvas;
+						var leadgrid:DataGrid = canvasAddLead.getChildAt(0) as DataGrid;
+						leadgrid.dataProvider = Database.leadDao.findAll(new ArrayCollection([{element_name:"LeadFirstName"},{element_name:"LeadLastName"}]),"CampaignId = '" + item.CampaignId + "'");
+						break;
+
+				}
+
+				
+			}
+
+			private function openFile():void {
+				var obj:Object = attachmentDataGrid.selectedItem;
+				if( obj == null) return;
+				Utils.openFile(obj);
+			}
+			
+			private function upload(file:File):void {
+				Utils.upload(file, entity, item.gadget_id, loadData, modifiedLocalUpdateItem);
+				var list:List = this.parentDocument as List;
+				list.selectItem(item);
+			}
+			
+			private function upload_(fileName:String, data:Object):void {
+				
+				var byt:ByteArray = data as ByteArray ;
+				var list:List = this.parentDocument as List;
+				//#5938 CRO
+				var loader:Loader = new Loader();
+				loader.loadBytes(byt); 
+				loader.contentLoaderInfo.addEventListener(Event.COMPLETE, function(e2:Event):void{
+					
+					Utils.upload_(fileName, Utils.imageLoaded((e2.currentTarget as LoaderInfo).loader,Utils.getRation(byt)), entity, item.gadget_id, loadData, modifiedLocalUpdateItem);
+					
+					list.selectItem(item);			
+				});
+				
+				
+			}
+			private function modifiedLocalUpdateItem():void{
+				item.local_update = new Date().getTime();
+				item.deleted = 0;
+				Database.getDao(entity).update(item);
+			}
+
+			private function openBrowser():void{
+				if(item == null){
+					Alert.show(i18n._(LISTDETAIL_ATTACHMENTS_ALERT_MSG_OPEN),'',Alert.OK,this);
+					return;
+				}
+				var fileBrowse:FileBrowse = new FileBrowse(upload_);
+				fileBrowse.show();
+			}
+					
+			private function deleteFile():void {
+				if(attachmentDataGrid.selectedItem == null){
+					Alert.show(i18n._(LISTDETAIL_ATTACHMENTS_ALERT_MSG_DELETE),'',Alert.OK,this);
+					return;	
+				}
+				Database.attachmentDao.deleteTemp(attachmentDataGrid.selectedItem);
+				modifiedLocalUpdateItem();
+				loadData();
+			}		
+			
+			// fix width of the first tab of viewstack
+			private function vsFirstTabWidth():void {
+				var vsFirstTab:Button = viewstack.getTabAt(0);
+				vsFirstTab.width = 75;
+			}
+			
+						
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%" height="100%">
+		<mx:TabNavigator id="viewstack" width="100%" height="100%" tabHeight="24">
+			<mx:VBox width="100%" height="100%" label="{i18n._(LISTDETAIL_TAB_DETAIL)}" verticalGap="0" verticalScrollPolicy="off">
+				<mx:HBox width="100%">
+			    	<mx:Canvas id="canvasPicture" top="0" />
+			        <mx:Form id="form" width="100%" horizontalGap="0" verticalGap="0" paddingBottom="0" paddingTop="0"/>
+					<mx:Form id="formRight" width="100%" horizontalGap="0" verticalGap="0" paddingBottom="0" paddingTop="0"/>
+				</mx:HBox>
+				<mx:HBox width="100%" height="100%" paddingLeft="20" id="statusProgress" visible="false" verticalAlign="middle" />
+			</mx:VBox>
+			<mx:Canvas label="{i18n._(LISTDETAIL_TAB_TASK)}" width="100%" height="100%" styleName="myStyle" id="taskCanvas">
+				<mx:DataGrid id="datagrid" top="0" left="8" right="8" bottom="8" doubleClickEnabled="true" doubleClick="{Utils.openDetail(datagrid.selectedItem,this.parentApplication as MainWindow)}">
+					<mx:columns>
+		                <mx:DataGridColumn dataField="Subject" headerText="{i18n._(LISTDETAIL_TASKS_DATAGRID_COLUMN_SUBJECT)}"/>
+		                <mx:DataGridColumn dataField="DueDate" headerText="{i18n._(LISTDETAIL_TASKS_DATAGRID_COLUMN_DUEDATE)}"/>
+		                <mx:DataGridColumn dataField="Priority" headerText="{i18n._(LISTDETAIL_TASKS_DATAGRID_COLUMN_PRIORITY)}"/>
+		                <mx:DataGridColumn dataField="Status" headerText="{i18n._(LISTDETAIL_TASKS_DATAGRID_COLUMN_STATUS)}"/>
+		                <mx:DataGridColumn dataField="Alias" headerText="{i18n._(LISTDETAIL_TASKS_DATAGRID_COLUMN_ALIAS)}"/>
+	            	</mx:columns>
+                </mx:DataGrid>
+			</mx:Canvas>
+			<mx:Canvas label="{i18n._(LISTDETAIL_TAB_ATTACHMENT)}" width="100%" height="100%"  styleName="myStyle" id="attachmentCanvas">
+				<mx:HBox left="8" right="30" bottom="8" top="0">
+					<mx:DataGrid width="100%" height="100%" id="attachmentDataGrid" doubleClickEnabled="true" doubleClick="openFile();" 
+							creationComplete="if (entity != 'Service Request') (attachmentDataGrid.columns[1] as DataGridColumn).visible = false;">
+						<mx:columns>
+			                <mx:DataGridColumn dataField="filename" headerText="{i18n._(LISTDETAIL_ATTACHMENTS_DATAGRID_COLUMN_FILENAME)}"/>
+							<!-- CRO bug fixing 59 02.02.2011-->
+							<mx:DataGridColumn dataField="include_in_report" headerText="Include in Report" width="20" >
+							<mx:itemRenderer>
+								<mx:Component>
+									<mx:HBox horizontalAlign="center" width="100%" >
+										<mx:Script >
+											
+											<![CDATA[
+												import gadget.dao.Database;
+												
+												private function updateAttachment(data:Object):void{
+													var  attachment:Object = data;
+													if( attachment != null){
+														attachment.include_in_report = includeInReport.selected;
+														Database.attachmentDao.updateAttachmentID(attachment);
+													}
+												}
+											]]>
+										</mx:Script>
+										<mx:CheckBox selected="{data.include_in_report}" id="includeInReport" click="updateAttachment(data);"/>
+									</mx:HBox>
+									
+								</mx:Component>
+							</mx:itemRenderer>
+							</mx:DataGridColumn>
+		            	</mx:columns>
+	                </mx:DataGrid>
+	                <mx:VBox>
+	                	<mx:LinkButton id="deleteAttachment" label="{i18n._(GLOBAL_DELETE)}" width="70" click="deleteFile();" enabled="{item != null}" />
+						<mx:LinkButton id="addAttachment" label="{i18n._(GLOBAL_ADD)}" width="70" click="openBrowser();" enabled="{item != null}"/>
+					</mx:VBox>
+				</mx:HBox>
+			</mx:Canvas>			
+		</mx:TabNavigator>
+    </mx:HBox>
+    
+    
+</control:ButtonPanel>
+

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:MXAdvancedDataGridItemRenderer xmlns:fx="http://ns.adobe.com/mxml/2009" 
+								  xmlns:s="library://ns.adobe.com/flex/spark" 
+								  xmlns:mx="library://ns.adobe.com/flex/mx" 
+								  focusEnabled="true">
+	<fx:Script>
+		<![CDATA[
+			 private function clickFunction():void{
+				data.isSync=!data.isSync;
+			 }			
+		]]>
+		
+	</fx:Script>
+	<mx:HBox horizontalAlign="center" width="100%">
+		<s:CheckBox  selected="{data.isSync}" enabled="{data.editabled == false? false : true}" click="{clickFunction()}" />
+	</mx:HBox>	
+</s:MXAdvancedDataGridItemRenderer>

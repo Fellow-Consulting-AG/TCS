@@ -1,0 +1,592 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Window 
+	xmlns:mx="http://www.adobe.com/2006/mxml"
+	xmlns:control="gadget.control.*"
+	xmlns:ibm="http://www.ibm.com/xmlns/prod/ilog/elixir/2010"
+	resizable="false"	
+	width="800" height="600"
+	title="Synchronize"
+	showFlexChrome="false" transparent="true" systemChrome="none"
+	creationComplete="initButtons();initLogs();init();synWhenOpenScreen();">
+
+	<mx:Script>
+		<![CDATA[
+			import flash.net.dns.SRVRecord;
+			
+			import gadget.dao.DAOUtils;
+			import gadget.dao.Database;
+			import gadget.dao.PreferencesDAO;
+			import gadget.i18n.i18n;
+			import gadget.sync.LogEvent;
+			import gadget.sync.SyncProcess;
+			import gadget.sync.incoming.CheckConflictObject;
+			import gadget.sync.task.LoginCRM;
+			import gadget.util.CacheUtils;
+			import gadget.util.ImageUtils;
+			import gadget.util.PreferenceUtils;
+			import gadget.util.SSOUtils;
+			import gadget.util.StringUtils;
+			import gadget.util.Utils;
+			import gadget.window.WindowManager;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.events.CloseEvent;
+			import mx.formatters.DateFormatter;
+			import mx.utils.ObjectProxy;
+		
+		[Bindable] public var isSRSyncnow:Boolean=false;
+		[Bindable] public var records:Array;
+		[Bindable] private var localReport:ArrayCollection;
+		[Bindable] private var serverReport:ArrayCollection;
+		[Bindable] private var lastSyncDate:String;
+//		[Bindable] private var license:LicenseManager = null;
+		private const MAX_LINE_REPORTED:int = 200;
+		
+		[Bindable] private var loggingMessages:ArrayCollection = new ArrayCollection();	
+			
+		public var mainWindow:MainWindow;
+		private var checkObjects:Array = null;	
+		private var dateFormatter:DateFormatter = new DateFormatter();
+		private function init():void{
+			this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN,keyDown);
+			lastSyncDate = Database.lastsyncDao.isSynced() ? " - Last Synchronize Date : " + Database.lastsyncDao.getLastSyncDate() : "";
+		}
+		private function initLogs():void {
+			
+			dateFormatter.formatString = "JJ:NN:SS";
+
+			localReport = new ArrayCollection();
+			serverReport = new ArrayCollection();	
+			if (mainWindow.syncProcess != null) {
+				mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons], mainWindow.fieldComplete);
+				for each (var log:LogEvent in mainWindow.syncProcess.logs) {
+					logInfo(log);
+				}
+				logProgress();
+				
+			}
+			
+		}
+		private function keyDown(evt:KeyboardEvent):void {
+		
+			if (evt.charCode == Keyboard.ESCAPE) {
+				this.close();
+			}
+		}
+		private function clearLog():void {
+			loggingMessages = new ArrayCollection();
+			dgLoggingArea.validateNow();
+		}
+			
+		public function initButtons():void {
+			if (mainWindow.syncProcess == null || mainWindow.syncProcess.finished) {
+				// hide/stop spinner animation
+				toggleSpinner(false);
+				syncDataBtn.enabled = true;
+				fullSync.enabled = true;
+				processParallel.enabled=true;
+				metadata.enabled = true;
+				btnStop.enabled = false;
+				btnClose.label = i18n._('GLOBAL_CLOSE');
+				btnClose.enabled=true;
+
+			} else {
+				// start spinner animation
+				toggleSpinner(true);
+				syncDataBtn.enabled = false;
+				processParallel.enabled=false;
+				fullSync.enabled = false;
+				metadata.enabled = false;
+				btnStop.enabled = true;
+				btnClose.label = i18n._('SYNCHRONIZE_BUTTON_RUN_IN_BACKGROUND');	
+				//accetp cannot run as background
+				if(records!=null && records.length>0){
+					btnClose.enabled=false;
+					
+					
+				}
+			}
+			if (mainWindow.syncProcess != null && mainWindow.syncProcess.hasErrors) {
+        		sendMailButton.includeInLayout = true;
+        		sendMailButton.visible = true;
+				mainWindow.syncBtn2.setStyle("icon", ImageUtils.synErrorIcon);
+        	} else {
+        		sendMailButton.includeInLayout = false;
+        		sendMailButton.visible = false;
+				mainWindow.syncBtn2.setStyle("icon", ImageUtils.synOkIcon);
+        	}
+			//syncnow cannot do full sync
+			if(isSRSyncnow){				
+				fullSync.enabled=false;		
+				metadata.enabled=false;
+				processParallel.enabled=false;
+				syncDataBtn.enabled=false;
+			}
+			
+			
+			
+			PreferenceUtils.WindowScreenBounds(this);
+		}
+		
+		private function synWhenOpenScreen():void{
+			if(isSRSyncnow){
+				syncData();
+			}
+				
+		}
+			
+			
+	
+			
+			
+			private function testConnectionError(error:String, event:Event):void {
+				
+				logInfo(new LogEvent(LogEvent.ERROR, error));
+				if(isSRSyncnow){
+					//bug#746---mony
+					if(error.indexOf("#2032")!=-1){						
+						for each (var obj:Object in records){
+							if(obj.CustomPickList10=="ONST"){								
+								obj.local_update = new Date().getTime();
+								Database.serviceDao.updateByOracleId(obj);
+							}
+							
+						}
+						
+					}
+				}
+//				mainWindow.syncProcess.stop();		
+				mainWindow.isUpdateTransaction=false;
+				mainWindow.syncEnd();
+				mainWindow.syncProcess=null;
+				initButtons();
+			}
+			
+			private function testConnectionSuccess(sessionId:String):void {
+				if(mainWindow.syncProcess!=null && !mainWindow.syncProcess.finished){
+					if(Database.preferencesDao.getBooleanValue(PreferencesDAO.ENABLE_CHECK_CONFLICTS,0)){
+						syncProgressBar.value=0;
+						mainWindow.syncProcess.bindFunctions(logInfo, null, logCount, syncEvent, [checkConflicts,initButtons], mainWindow.fieldComplete);											
+					}else{
+						if(!isSRSyncnow){
+							mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons], mainWindow.fieldComplete);
+						}
+						
+//						mainWindow.syncProcess.start();
+					}
+					mainWindow.syncProcess.start();
+				}
+				
+
+				
+			
+			}
+			
+			
+			
+			private function checkConflicts():void{
+				if(mainWindow.syncProcess==null || mainWindow.syncProcess.isStopped){
+					return;
+				}
+				var conflicts:ArrayCollection=new ArrayCollection();
+				for each(var obj:CheckConflictObject in checkObjects){
+					conflicts.addAll(obj.getConflicts());
+				}
+				if(conflicts.length>0){
+					var mergeConflicts:MergeConflictsObject=new MergeConflictsObject();
+					mergeConflicts.datas=conflicts;
+					mergeConflicts.syncEnd=mainWindow.syncEnd;
+					mergeConflicts.startSyn=startSyn;
+					WindowManager.openModal(mergeConflicts);
+				}else{
+					startSyn();
+				}
+			}
+			private function startSyn():void{
+					
+					mainWindow.syncProcess =  new SyncProcess(isFullSync(),metadata.selected,processParallel.selected);
+					mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons], mainWindow.fieldComplete);
+					mainWindow.syncProcess.start();
+					initButtons();
+			}
+			
+			
+			
+		
+		private function isFullSync():Boolean{
+			var full:Boolean = fullSync.selected;
+			full =  full || !Database.lastsyncDao.isSynced();
+			return full;
+		}
+			
+			
+			
+		public function syncData():void {
+			var preference:Object = Database.preferencesDao.read();
+//			var credential:Credential = new Credential(preference.sodhost, preference.sodlogin, preference.sodpass, "CRM Gadget");
+//			license = new LicenseManager(credential);
+//			license.isValid(function(valid:Boolean):void {
+			
+			var lst:ArrayCollection = Utils.checkWarningServiceRequest("(OwnerId = (select id from user)) AND ");
+			if( lst != null && lst.length >0){
+			    Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"),Alert.OK,this);	
+				return;
+			}
+			var valid:Boolean = true;
+				if(valid) {
+					new CacheUtils("right").clear();
+					new CacheUtils("field").clear();
+					if (mainWindow.syncProcess == null || mainWindow.syncProcess.finished) {
+						clearLog();					
+						Database.syncNumberDao.increaseSyncNumber();
+						logInfo(new LogEvent(LogEvent.INFO, i18n._('SYNCHRONIZE_SYNCHRONIZATION_STARTED')));					
+						localReport = new ArrayCollection();
+						serverReport = new ArrayCollection();	
+						mainWindow.syncBtn1.visible = true;
+						mainWindow.syncBtn1.includeInLayout = true;
+						mainWindow.syncBtn2.visible = false;
+						mainWindow.syncBtn2.includeInLayout = false;				
+						checkObjects=null;
+						if(!isSRSyncnow){
+							if(Database.preferencesDao.getBooleanValue(PreferencesDAO.ENABLE_CHECK_CONFLICTS,0)){
+								var enableTrans:ArrayCollection = Database.transactionDao.listEnabledTransaction();
+								checkObjects=new Array();
+								for each(var obj:Object in enableTrans){						
+									checkObjects.push(new CheckConflictObject(obj.entity));
+								}							
+							}
+							
+							mainWindow.syncProcess =new SyncProcess(isFullSync(),metadata.selected,processParallel.selected,false,null,checkObjects);
+						}else{
+							mainWindow.syncProcess = new SyncProcess(false,false,false,isSRSyncnow,records);
+							mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons],completed);
+						}
+						initButtons();				
+						//reset session
+						SSOUtils.resetSession();
+						var login:LoginCRM = new LoginCRM(testConnectionSuccess, testConnectionError);
+						login.loginCRM(preference, false);
+						mainWindow.checkTips();
+					}
+					btnClose.label = i18n._('SYNCHRONIZE_BUTTON_RUN_IN_BACKGROUND');
+					if(isSRSyncnow) this.close(); // run synchronize window in background
+				}
+//				else {
+//					var body:String = i18n._("COMPANY_NAME") + ": " + credential.company + "\n" + i18n._("URL") + ": " + credential.shorturl + "\n" + i18n._("PRODUCT_NAME") + ": " + credential.device;
+//					var dtoMail:DtoMail = new DtoMail("sales@fellow-consulting.de", i18n._("LICENSE_ACTIVATION"), body);
+//					var mail:SendMail = new SendMail(dtoMail);
+//					mail.send();
+//				}
+//			});
+		}
+			
+		private function toggleSpinner(on:Boolean):void {
+			if (!on) {
+				spinner.stop();
+			} else {
+				spinner.play();
+			}
+		}
+			
+		/*private function alertHandler(event:CloseEvent):void {
+			if (event.detail == Alert.NO) {
+				fullSync.selected = false;
+				metadata.selected = false;
+			}
+		}	*/
+			
+		private function completed():void {
+			//license.updateLicense();
+			mainWindow.fieldComplete();
+		}	
+			
+		private function fullSynData():void {
+			if (fullSync.selected){
+				Alert.show(i18n._('SYNCHRONIZE_ALERT_FULL_SYNCHRONIZATOIN'), i18n._('SYNCHRONIZE_ALERT_WARNING'), Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
+					if (event.detail==Alert.YES){
+						metadata.selected = false;
+					}else{
+						fullSync.selected = false;
+					}
+				});
+			} 
+		}		
+		
+			
+		private function parallelProcessing():void {
+			if (processParallel.selected){
+				Alert.show(i18n._('Parallel Processing is recommended for slow network.\n Do you want to use this option?'), i18n._('Parallel Processing'), Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
+					if (event.detail!=Alert.YES){
+						processParallel.selected = false;
+					}
+				});
+			} 
+		}		
+		private function synMetaData():void {
+			if(metadata.selected){
+				Alert.show(i18n._('download only the meta data.'), i18n._('download only the meta data'), 3, this, function(event:CloseEvent):void{
+					if (event.detail==Alert.YES){
+						fullSync.selected = false;
+					}else{
+						metadata.selected = false;
+					}
+				});
+			}
+		}	
+			
+		private function stop():void {
+			//CRO 05.01.2011
+            Alert.show(i18n._('SYNCHRONIZE_ALERT_ARE_YOU_SURE_YOU_TO_STOP_SYNCHRONIZE'), i18n._('GLOBAL_SYNCHRONIZATOIN'), 3, this, function(event:CloseEvent):void{
+ 				if (event.detail==Alert.YES){
+ 					btnStop.enabled = false;
+					mainWindow.syncProcess.stop();
+					mainWindow.syncProcess = null;
+//					license.updateLicense();
+     			}
+            });
+		}
+			
+		private function logInfo(log:LogEvent):void {
+			var msg:Object = new Object();
+			msg.type = log.type;
+			msg.event = log.event;
+			msg.time = dateFormatter.format(log.date);
+			msg.record=log.errorRecord;
+			var text:String = dateFormatter.format(log.date) + " - ";
+			if (log.event != null) {
+				text += Utils.formatEvent(log.event) + "\n" + Utils.htmlEscape(log.text);
+//				msg.message = Utils.formatEvent(log.event) + "\n" + Utils.htmlEscape(log.text);
+				msg.message = Utils.htmlEscape(log.text);
+			} else {
+				text += log.text;
+				msg.message = log.text;
+			}
+			//VAHI use ObjectProxy to suppress "warning: unable to bind to property"
+			loggingMessages.addItem(new ObjectProxy(msg));
+			dgLoggingArea.validateNow();
+			dgLoggingArea.verticalScrollPosition = dgLoggingArea.maxVerticalScrollPosition;
+		}
+			
+		private function logProgress():void {
+			if (mainWindow.syncProcess != null) {
+				syncProgressBar.value = mainWindow.syncProcess.progress;
+			}
+		}
+			
+		private function logCount(nbItems:int, entityName:String):void {
+			if (nbItems == 0) {
+				ItemSyncInfo.text = '';
+			} else {
+				var pl:String = Database.customLayoutDao.getPlural(entityName);
+				if (pl==null)
+					pl=entityName;
+				ItemSyncInfo.text = nbItems + ' ' + pl + ' ' + i18n._('SYNCHRONIZE_HAVE_BEEN_SYNCHRONIZED');
+			}
+		}
+		
+		private function syncEvent(remote:Boolean, type:String, name:String, action:String):void {
+			var reportLine:Object = new Object();
+			reportLine.type = type;
+			reportLine.name = name;
+			reportLine.action = action;
+			if (remote) {
+				//VAHI ObjectProxy removes warning: unable to bind to property 'type' on class 'Object' (class is not an IEventDispatcher)
+				serverReport.addItem(new ObjectProxy(reportLine));
+				if(serverReport.length > MAX_LINE_REPORTED){
+					serverReport.removeItemAt(0);
+				}
+			} else {
+				//VAHI ObjectProxy removes warning: unable to bind to property 'type' on class 'Object' (class is not an IEventDispatcher)
+				localReport.addItem(new ObjectProxy(reportLine));
+				if(localReport.length > MAX_LINE_REPORTED){
+					localReport.removeItemAt(0);
+				}
+			}
+		}
+		
+		private function handleErrorAction():void{
+			var d:Date = new Date();
+			var dateFormatter:DateFormatter = new DateFormatter();
+            dateFormatter.formatString = "DD/MM/YYYY JJ:NN:SS"; //VAHI I (sic!) need the time in forwarded errors
+			// Bug #195
+			Utils.openURL(generateURL("support@crm-gadget.com","Synchronization Error - " + dateFormatter.format(d), Database.errorLoggingDao.dumpOnlyError()), "_blank");//.substr(0,5000) CRO
+		}
+		
+		private function generateURL(email:String, subject:String, body:String):String{	
+			// var escapeBody:String = str.replace(""," "); // encodeURI(body).replace(/\%0D/g, "%0A").substr(0,20000);
+			//body = body.replace(/</g, "&lt;");
+			//body = body.replace(/>/g, "&gt;");
+			//body = body.replace(/\n/g, "%3C%2Fp%3E"); // Decode line breaks 
+			//body = body.replace(/%2%2C0/g, "%2C%20"); // Fix bug in syntax
+			var unescapeBody:String = unescape(encodeURI(body)).substr(0,20000);
+			// unescapeBody = StringUtils.xmlUnEscape(unescapeBody);	
+			//unescapeBody = unescapeBody.replace(/'/g, "&apos;");
+			//unescapeBody = unescapeBody.replace(/''/g, "&quot;");
+			//unescapeBody = unescapeBody.replace(/& /g, "&amp;");
+			
+			return "mailto:" + email + "?subject=" + encodeURI(subject) + "&body=" + unescapeBody;
+		}	
+		
+		private function showLoggingDetail():void {
+			var loggingDetail:LoggingDetail = new LoggingDetail();
+			loggingDetail.item = dgLoggingArea.selectedItem;
+			if(loggingDetail.item.record!=null){
+				var record:Object = loggingDetail.item.record;
+				var type:String = record.gadget_type;
+				if(type.indexOf(".")!=-1){
+					type = type.substring(0,type.indexOf("."));
+					var oraId:String = DAOUtils.getOracleId(type);
+					if(record[oraId]!=null){
+						var parentRec:Object = Database.getDao(type).findByOracleId(record[oraId]);
+						if(parentRec!=null){
+							record = parentRec;
+						}
+					}
+					
+				}
+				
+				loggingDetail.list=mainWindow.getListByEntity(record.gadget_type);
+			}			
+			WindowManager.openModal(loggingDetail);
+		}
+		
+		]]>
+	</mx:Script>
+	
+	<mx:Style source="styles.css"/>
+	<mx:Style source="ilog-gauges.css"/>
+	<mx:Canvas styleName="main" left="0" top="0" width="100%" height="100%" right="0" bottom="0"><!--CRO 05.01.2011-->
+		<control:TitleBar icon="@Embed(source='/assets/sync.png')" title="{i18n._('GLOBAL_SYNCHRONIZATOIN')}"/>
+		
+		<mx:VBox top="32" left="16" right="16" bottom="16" verticalGap="16">
+
+			<mx:Panel title="{i18n._('SYNCHRONIZE_PANEL_PROGRESS')}{lastSyncDate}" width="100%">
+				<mx:VBox width="100%" paddingLeft="8" paddingRight="8" paddingTop="8" paddingBottom="8">
+					
+					<mx:DataGrid id="dgLoggingArea" doubleClickEnabled="true" doubleClick="showLoggingDetail();" rowCount="5" dataProvider="{loggingMessages}" width="100%" height="135" variableRowHeight="true">
+						<mx:columns>
+							<mx:DataGridColumn headerText="{i18n._('SYNCHRONIZE_DATAGRID_COLUMN_TIME')}" width="100">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:Label text="{data.time}" fontSize="10"/>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="{i18n._('SYNCHRONIZE_DATAGRID_COLUMN_TYPE')}" dataField="type" width="60">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:HBox width="100%" horizontalScrollPolicy="off" horizontalAlign="center">
+											<mx:Script>
+												<![CDATA[
+													import gadget.sync.LogEvent;
+													import gadget.util.ImageUtils;
+													private function getImage(str:String):Class{
+														var typeIcon:Class;
+														switch(data.type)
+														{
+															case LogEvent.ERROR: typeIcon = ImageUtils.errorIcon; break;
+															case LogEvent.WARNING: typeIcon = ImageUtils.warningIcon; break;
+															case LogEvent.SUCCESS: typeIcon = ImageUtils.tickIcon; break;
+															default: typeIcon = ImageUtils.infoIcon;
+														}
+														return typeIcon;
+													}
+												]]>
+											</mx:Script>
+											<mx:Image source="{getImage(data.type)}"/>
+										</mx:HBox>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn><!--CRO 05.01.2011-->
+							<mx:DataGridColumn headerText="{i18n._('GLOBAL_MESSAGE')}" dataField="message" itemRenderer="gadget.control.SynLoggingColorRenderer"/>
+							<!--<mx:DataGridColumn headerText="{i18n._('GLOBAL_RECORD_NAME')}" dataField="recordename" width="100"/>-->
+						</mx:columns>
+					</mx:DataGrid>
+						
+					<mx:VBox width="100%" >
+						<ibm:HLinearGauge id="syncProgressBar" title="{i18n._('SYNCHRONIZE_HLINEAR_GAUGE_SYNCHRONIZATION_PROGRESS')}" width="100%" editable="false"
+									  trackMinimum="50" trackMaximum="100" snapInterval="1" orientation="ltr" maximum="100" mode="bar" styleName="horizontalSpark"/>
+						<mx:HBox width="100%">
+							<control:Spinner id="spinner" tickColor="#66aaff"/>
+							<mx:Text id="ItemSyncInfo"/>
+						</mx:HBox>
+					</mx:VBox>
+
+					<mx:HBox width="100%" horizontalAlign="right">
+						<mx:LinkButton includeInLayout="false" icon="@Embed('/assets/mail_icon.png')" label="{i18n._('SYNCHRONIZE_LINK_BUTTON_EMAIL_ERROR_REPORT')}" id="sendMailButton" visible="false" click="handleErrorAction()" />
+					</mx:HBox>					
+				</mx:VBox>
+			</mx:Panel>	
+
+			<mx:HBox width="100%" height="100%">
+				<mx:Panel title="{i18n._('SYNCHRONIZE_PANEL_LOCAL')}" titleStyleName="syncHeader" width="50%" height="100%" headerHeight="64" titleIcon="@Embed('/assets/laptop.png')">
+					<mx:DataGrid id="localList" dataProvider="{localReport}" width="100%" height="100%">
+						<mx:columns><!--CRO 05.01.2011-->
+							<mx:DataGridColumn headerText="{i18n._('GLOBAL_NAME')}">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:HBox width="100%" horizontalScrollPolicy="off">
+											<mx:Script>
+												<![CDATA[
+													import gadget.util.ImageUtils;
+												    private function getImage(str:String):Class{
+												        return ImageUtils.getImage(str);
+												    }  
+												]]>
+											</mx:Script>
+											<mx:Image source="{getImage(data.type)}"/>
+											<mx:Label width="100%" text="{data.name}"/>
+										</mx:HBox>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="{i18n._('SYNCHRONIZE_DATAGRID_COLUMN_ACTION')}" dataField="action"/>
+						</mx:columns>
+					</mx:DataGrid>						
+				</mx:Panel>
+				<mx:Panel title="{i18n._('SYNCHRONIZE_PANEL_SERVER')}" titleStyleName="syncHeader" width="50%" height="100%" headerHeight="64" titleIcon="@Embed('/assets/server.png')">
+					<mx:DataGrid id="serverList" dataProvider="{serverReport}" width="100%" height="100%">
+						<mx:columns><!--CRO 05.01.2011-->
+							<mx:DataGridColumn headerText="{i18n._('GLOBAL_NAME')}">
+								<mx:itemRenderer>
+									<mx:Component>
+										<mx:HBox width="100%" horizontalScrollPolicy="off">
+											<mx:Script>
+												<![CDATA[
+													import gadget.util.ImageUtils;
+										    		
+												    private function getImage(str:String):Class{
+												        return ImageUtils.getImage(str);
+												    }  
+												]]>
+											</mx:Script>
+											<mx:Image source="{getImage(data.type)}"/>
+											<mx:Label width="100%" text="{data.name}"/>
+										</mx:HBox>
+									</mx:Component>
+								</mx:itemRenderer>
+							</mx:DataGridColumn>
+							<mx:DataGridColumn headerText="{i18n._('SYNCHRONIZE_DATAGRID_COLUMN_ACTION')}" dataField="action"/>
+						</mx:columns>
+					</mx:DataGrid>						
+				</mx:Panel>		
+			</mx:HBox>
+			<mx:Canvas width="100%">
+				<mx:HBox left="0"><!--CRO 05.01.2011-->
+					<mx:Button emphasized="true" label="{i18n._('GLOBAL_SYNCHRONIZE')}" id="syncDataBtn" click="syncData()"/>	
+					<mx:CheckBox id="fullSync" label="{i18n._('SYNCHRONIZE_CHECK_BOX_PERFOM_FULL_SYNCHRONIZE')}" 
+						click="fullSynData()"/>
+					<mx:CheckBox id="metadata" label="{i18n._('GLOBAL_META_DATA_ONLY')}" click="synMetaData()" />	
+					<mx:CheckBox id="processParallel" label="{i18n._('GLOBAL_PARALLEL_PROCESSING')}" click="parallelProcessing()"/>
+				</mx:HBox>				
+			</mx:Canvas>
+			<mx:Canvas width="100%">
+			<mx:HBox right="0">
+				<mx:Button id="btnStop" label="{i18n._('SYNCHRONIZE_BUTTON_STOP')}" click="stop();"/>
+				<mx:Button id="btnClose" click="close();" right="0"/>	
+			</mx:HBox>
+			</mx:Canvas>
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Window>

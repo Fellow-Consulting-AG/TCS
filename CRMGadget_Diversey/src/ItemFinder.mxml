@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--CRO 05.01.2011-->
+<mx:Window 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:control="gadget.control.*"
+	width="440" height="428"
+	title="{Database.customLayoutDao.getDisplayName(relation.entityDest) +' '+ i18n._('GLOBAL_FINDER')}" 
+	showFlexChrome="false" transparent="true" systemChrome="none" creationComplete="updateInfo(); init()">
+	
+	<mx:Script>
+		<![CDATA[
+			import gadget.control.ImageTextInput;
+			import gadget.dao.DAO;
+			import gadget.dao.Database;
+			import gadget.dao.LinkDAO;
+			import gadget.i18n.i18n;
+			import gadget.util.GUIUtils;
+			import gadget.util.StringUtils;
+			import gadget.window.WindowManager;
+			
+			import mx.collections.ArrayCollection;
+			import mx.controls.Alert;
+			import mx.controls.Text;
+
+			[Bindable] public var item:Object;
+			[Bindable] public var relation:Object; 
+			[Bindable] private var allItems:ArrayCollection;
+			public var textInput:TextInput;
+			public var reload:Function;
+			public var filter:String;
+			
+			private function init():void {
+				var objRel:Object = Database.getDao(relation.entityDest).findByOracleId(item[relation.keySrc]);
+				if(objRel){
+					searchInput.text = objRel["uppername"];
+					searchInput.setSelection(searchInput.text.length, searchInput.text.length);
+					doSearch();
+				} else if (filter != null) {
+					doSearch();
+				}				
+				searchInput.setFocus();
+				searchInput.selectionBeginIndex =0;
+				searchInput.selectionEndIndex = searchInput.text.length;
+				this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN,keyDown);
+			}
+			private function keyDown(evt:KeyboardEvent):void {
+				if (evt.charCode == Keyboard.ESCAPE) {
+					this.close();
+				}
+			}
+			private function doSearch():void {
+				if (searchInput.text.length >= 2 || filter != null) {
+					allItems = Database.linkDao.allItems(new ArrayCollection([relation.entityDest]), searchInput.text.toUpperCase(), filter,getOptionalDisplayCol());
+				} else {
+					allItems = null;
+				}
+				updateInfo();
+			}
+			
+			public function getOptionalDisplayCol():Array{
+				if(relation.entityDest==Database.productDao.entity && relation.entitySrc == Database.customObject2Dao.entity){
+					//bug#5940--hack code to get field description by user's lange
+					var langCode:String = Database.allUsersDao.ownerUser()['LanguageCode'];
+					if(!StringUtils.isEmpty(langCode)){
+						switch(langCode){
+							case 'ENG':
+							case 'ENU':
+								return ['CustomText9'];
+							case 'NLD':
+								return ['CustomText1'];
+							case 'DEU':
+								return ['CustomText4'];
+							case 'PTG':
+								return ['CustomText6'];
+							case 'FRA':
+								return ['CustomText3'];
+							case 'DAN':
+								return ['CustomText0'];
+							case 'SVE':
+								return ['CustomText8'];
+						}
+						
+						
+					}
+					
+					
+				}
+				return null;
+				
+			}
+			
+			private function updateInfo():void {
+				if (allItems != null && allItems.length == 1000) {
+					//CRO 05.01.2011
+					info.text = i18n._('GLOBAL_ONLY_THE_FIRST_1000_MATCHING_ITEMS_ARE_SHOWN');
+				}  else if (allItems != null) {
+					info.text = allItems.length + " " + i18n._('ITEM_FINDER_LABEL_ITEMS_FOUNDS');
+				} else if (filter == null) {
+					//CRO 05.01.2011
+					info.text = i18n._('GLOBAL_PLEASE_ENTER_AT_LEAST_TWO_CHARACTERS_FOR_SEARCH');
+				}
+			}
+			
+			private function selectItem(selected:Object):void {
+				if (selected==null) return;
+				var other:Object = Database.getDao(relation.entityDest).findByGadgetId(selected.gadget_id);
+				item[relation.keySrc] = other[relation.keyDest];
+				for(var i:int=0; i<relation.labelDest.length; i++){
+					item[relation.labelSrc[i]] = other[relation.labelDest[i]];
+				}
+				if (textInput != null) {
+					textInput.text = other[relation.labelDest[0]];
+				}
+				if (reload != null) {
+					reload(); // refresh detail input fields
+				}
+				close();
+			}
+
+			
+		]]>
+	</mx:Script>
+	<mx:Style source="styles.css"/>
+	<mx:Canvas styleName="main" left="0" top="0" width="440" height="428" right="0" bottom="0"><!--CRO 05.01.2011-->
+		<control:TitleBar icon="@Embed(source='/assets/search.png')" title="{GUIUtils.getItemFinderLabel(Database.customLayoutDao.getDisplayName(relation.entityDest) , ' ' + i18n._('GLOBAL_FINDER'))}"/>
+		<mx:VBox top="32" left="16" right="16">
+			<mx:Form width="100%" paddingBottom="8">
+				<mx:Label id="info" left="0"/><!--CRO 05.01.2011 ITEM_FINDER_FORM_ITEM_SEARCH-->
+				<mx:FormItem label="{i18n._('GLOBAL_SEARCH')}">
+					<mx:TextInput width="200" id="searchInput" change="doSearch()"/>
+				</mx:FormItem><!--CRO 05.01.2011-->
+				<mx:FormItem label="{i18n._('GLOBAL_RESULTS')}" width="100%">
+					<mx:List id="resultList" width="100%" dataProvider="{allItems}" rowHeight="27" rowCount="10" click="selectItem(resultList.selectedItem)">
+						<mx:itemRenderer>
+							<mx:Component>
+								
+								<mx:HBox horizontalScrollPolicy="off" horizontalAlign="left" horizontalGap="0">
+									<mx:Script>
+										<![CDATA[
+											import gadget.dao.Database;
+											import gadget.util.ImageUtils;
+											import gadget.util.Utils;
+											
+											private function getDisplayName(data:Object):String{
+												if(data ==null){
+													return '';
+												}
+												var optionalCols:Array = outerDocument.getOptionalDisplayCol();
+												var displayName:String = data.name;
+												if(optionalCols!=null){
+													for each(var col:String in optionalCols){
+														displayName+=" - " + data[col];
+													}
+													return displayName;
+												}
+												
+												
+													
+												return data.name;
+												
+											}
+											
+										]]>
+									</mx:Script>
+									<mx:Image id="albumImage" source="{ImageUtils.getImage(data.gadget_type)}"/>
+									<mx:Label text="{getDisplayName(data)}" width="100%"/>
+								</mx:HBox>								
+							</mx:Component>
+						</mx:itemRenderer>
+					</mx:List>
+				</mx:FormItem>
+			</mx:Form>
+			<mx:Canvas width="100%">
+				<mx:Button id="closeBtn" label="{i18n._('GLOBAL_CLOSE')}" click="this.close()" right="0"/>	
+			</mx:Canvas>		
+		</mx:VBox>
+	</mx:Canvas>
+</mx:Window>

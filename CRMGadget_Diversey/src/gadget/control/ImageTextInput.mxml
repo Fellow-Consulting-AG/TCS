@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Canvas width="100%"  xmlns:mx="http://www.adobe.com/2006/mxml" creationComplete="init()">
+	<mx:Script>
+		<![CDATA[
+			import gadget.dao.Database;
+			
+			import mx.collections.ArrayCollection;
+			[Bindable] public var text:String;
+			[Bindable] public var item:Object;
+			[Bindable] public var clickFunc:Function;
+			[Binable] public var isEnable:Boolean = true;
+			
+			
+			
+			
+			private function init():void{
+				imgDelete.visible = isEnable;
+				imgSeach.visible = isEnable;
+				embedText.enabled = isEnable;
+				if(!isEnable){
+					embedText.setStyle("fontWeight", "bold");
+					embedText.setStyle("backgroundAlpha","0");
+					embedText.setStyle('borderStyle','none');
+				}
+			}
+			
+			private function removeRelation():void {
+				text = '';
+				embedText.text='';
+				if(item==null) return;
+				//CH : clear reference fields
+				if(data.keySrc != null) {
+					item.data[data.keySrc] = "";
+					for each(var element_name:String in data.labelSrc){
+						item.data[element_name] = "";
+					}
+				}else{
+					//Mony-clear referenc fields
+					var strTableFinder:String = Database.fieldFinderDAO.getFinderTableName(data);
+					var finder:Object = Database.finderDAO.read({'id':strTableFinder});
+					var fieldsMap:ArrayCollection = Database.finderMapDAO.read(finder);
+					for each(var fieldMap:Object in fieldsMap){
+						item.data[fieldMap.field] = "";
+					}
+				}
+			}
+			private function onclick(e:Event):void{
+				if(isEnable){
+					clickFunc(e);
+				}
+			}
+		]]>
+	</mx:Script>
+	
+	<mx:HBox width="100%">
+		<mx:Canvas width="95%">			
+			<mx:TextInput id="embedText" disabledColor="0x00000" text="{text}" data="{data}" editable="false" click="onclick(event)" width="100%"/>
+			<mx:Image id="imgSeach" source="@Embed('/assets/search.png')" verticalCenter="0" right="5"/>
+		</mx:Canvas>
+		<mx:LinkButton id="imgDelete" icon="@Embed('/assets/delete.png')" click="{removeRelation()}"/>
+	</mx:HBox>
+	
+</mx:Canvas>

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mx:Window 
+	xmlns:mx="http://www.adobe.com/2006/mxml" 
+	xmlns:sg="com.adobe.flex.extras.controls.springgraph.*" 
+	xmlns:control="gadget.control.*"
+	xmlns:local="*" 
+	layout="absolute"
+	creationComplete="onCreationComplete()"
+	title="{i18n._('MAINWINDOW_BUTTON_MINDMAP')}" 
+	showFlexChrome="false" transparent="false" systemChrome="none" width="960" height="640" 
+	>
+	
+	<mx:Style source="styles.css"/>
+	
+	<mx:Script>
+		<![CDATA[
+			import com.rubenswieringa.interactivemindmap.Controller;
+			
+			import gadget.dao.Database;
+			import gadget.i18n.i18n;
+			import gadget.util.Utils;
+			
+			import mx.controls.Alert;
+		
+		[Bindable] public var item:Object;
+		
+		private function onCreationComplete ():void {
+			maximize();
+			springGraph.width = Screen.mainScreen.bounds.width;
+			springGraph.height = Screen.mainScreen.bounds.height;
+			var xml:XML = genXml();
+			trace(xml);
+			Controller.boot(this.springGraph, xml);
+			
+		}
+		
+		private function genXml():XML {
+			var xml:XML =
+				<mindmap>
+				  <words>
+				    <word type="main"/>
+				  </words>
+				  <links>
+				  </links>
+				</mindmap>;
+			//var id:String = Utils.getId(item);
+			xml.words[0].word[0].@id = item.gadget_type + "_" + item.gadget_id;
+			xml.words[0].word[0].@value = Utils.getName(item);
+			var i:int = 0;
+			for each (var link:Object in Database.linkDao.linkedItems(null, item)) {
+				xml.words[0].word[0].appendChild(<word/>);
+				xml.words[0].word[0].word[i].@id = link.gadget_type + "_" + link.gadget_id;
+				var child:Object = Database.getDao(link.gadget_type).findByGadgetId(link.gadget_id);
+				if (child != null) {
+					xml.words[0].word[0].word[i].@value = Utils.getName(child);
+					var j:int = 0;
+					for each (var link2:Object in Database.linkDao.linkedItems(null, link)) {
+						if (link2.gadget_id != item.gadget_id) {
+							xml.words[0].word[0].word[i].appendChild(<word/>);
+							xml.words[0].word[0].word[i].word[j].@id = link2.gadget_type + "_" + link2.gadget_id;
+							var child2:Object = Database.getDao(link2.gadget_type).findByGadgetId(link2.gadget_id);
+							if (child2 != null) {
+								xml.words[0].word[0].word[i].word[j].@value = Utils.getName(child2);
+								j++;
+							}
+						}
+					}
+				}
+				
+				i++;
+			}
+			return xml;
+		}
+			
+		]]>
+	</mx:Script>
+
+	<mx:Canvas left="0" top="0" width="100%" height="100%" right="0" bottom="0">
+		<mx:LinkButton fontSize="24" left="8" top="8" label="{i18n._('GLOBAL_CLOSE')}" click="close()"/>
+		<sg:SpringGraph id="springGraph" left="0" top="48" bottom="0" right="0" repulsionFactor="2"
+			dataProvider="{Controller.instance.graph}" 
+			itemRenderer="com.rubenswieringa.interactivemindmap.NodeRendererShell" />
+	</mx:Canvas>
+	
+</mx:Window>
