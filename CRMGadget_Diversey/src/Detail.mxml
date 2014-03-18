@@ -774,7 +774,7 @@
 			
 		
 			private function init():void {
-				
+				viewRestoreMaxWindow();
 				currentUser = Database.currentUserDAO.getCurrentUser();
 				var isEnabledFeedEntity:Boolean = Database.feedDAO.isFeedEnabled(entity);
 				var isEnabledFeed:Boolean = Database.preferencesDao.getBooleanValue("enable_feed");
