@@ -16,6 +16,9 @@
 	creationComplete="importDefaultXMLfile(); manageNavPanelView(); updateTransactions(); init() ;checkExpired(); initKeyHandler();"
 	visible="false" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:layout="flexlib.scheduling.scheduleClasses.layout.*" xmlns:code="http://code.google.com/p/flexlib/"
 	close="OOPSwindow.bye();"
+	resizable="true"
+	minHeight ="640" 
+	minWidth="1020"
 	> 
 	<mx:Script>
 		<![CDATA[
@@ -1871,7 +1874,11 @@
 				</mx:VBox>
 			</mx:HBox>
 		</mx:Canvas>
-		
+		<mx:VBox horizontalAlign="right" verticalAlign="bottom" width="100%" height="100%" paddingBottom="1" paddingRight="1">
+			<mx:Image  source="@Embed('/assets/resize.png')" >
+				
+			</mx:Image>
+		</mx:VBox>
 	</mx:Canvas>
 	
 </mx:Window>

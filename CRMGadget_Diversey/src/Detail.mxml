@@ -2,13 +2,17 @@
 <mx:Window 
 	xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:control="gadget.control.*"
-	resizable="false"
 	width="960" height="540"
 	showFlexChrome="false" transparent="true" systemChrome="none" xmlns:form="gadget.form.*"
 	initialize="initial()"
 	creationComplete="init();"
 	close="closeDetail();"  
 	keyDown="keyDown(event);"
+	resizable="true"
+	minHeight ="540" 
+	minWidth="960"
+	layout="absolute" 
+	windowResize="checkTips()"
 	>
 	
 	<mx:Script>
@@ -18,6 +22,7 @@
 			import gadget.control.AutoCompleteAddress;
 			import gadget.control.CalculatedField;
 			import gadget.control.CalendarIlog;
+			import gadget.control.CloseableToolTip;
 			import gadget.control.ImageTextInput;
 			import gadget.control.ImageTreeFinder;
 			import gadget.dao.BaseDAO;
@@ -817,18 +822,18 @@
 			
 			private function setTitle(title:String):void {
 				this.title = title;
-				titlebar.title = title;	
+				titleLabel.text = title;	
 			}
 			
 			private function setIcon(isBlackWhite:Boolean = false):void {
 				var customLayout:Object = Database.customLayoutDao.readSubtype(entity, subtype);
 				var iconName:String = isBlackWhite ? customLayout.custom_layout_icon + "BW" : customLayout.custom_layout_icon;
-				titlebar.icon = ImageUtils.getIconByName(iconName);
+				windowTitleBar.icon = ImageUtils.getIconByName(iconName);
 				if(!StringUtils.isEmpty(customLayout.background_color)){
-					titlebar.setStyle("backgroundColor", customLayout.background_color);
+					windowTitleBar.setStyle("backgroundColor", customLayout.background_color);
 				}else{
 					var titleBarColor:String = Database.preferencesDao.getValue(PreferencesDAO.BACKGROUND_COLOR) as String; 
-					if(!StringUtils.isEmpty(titleBarColor)) titlebar.setStyle('backgroundColor',titleBarColor);					
+					if(!StringUtils.isEmpty(titleBarColor)) windowTitleBar.setStyle('backgroundColor',titleBarColor);					
 				}
 			} 
 			
@@ -1967,14 +1972,41 @@
 					btnComment_clickHandler(null);
 				}
 			}
-
+			private var fMax:Boolean = false;
+			private function viewRestoreMaxWindow():void {
+				if (fMax) {
+					fMax = false;
+					restore();
+				} else { 
+					fMax = true; 
+					maximize();
+				}
+			}
+			public function closeMain():void{
+				this.close();
+				
+			}
+			private var currentTip:CloseableToolTip;
+			public function checkTips():void {
+				if (currentTip != null) {
+					currentTip.close();
+					currentTip = null;
+				}
+				
+			}
 		]]>		
 		
 	</mx:Script>
 	
 	<mx:Style source="styles.css"/>
 	<mx:Canvas id="detailCanvas" horizontalScrollPolicy="off" styleName="main" left="0" top="0" width="980" height="240" right="0" bottom="0">
-		<control:TitleBar id="titlebar" y="2" x="25" entity="{entity}" detail="{this}"/>		
+		<mx:Canvas id="windowTitleBar" backgroundColor = "#EEEEEE" styleName="titleBar" doubleClickEnabled="true" doubleClick="viewRestoreMaxWindow()" mouseDown="nativeWindow.startMove()" height="24" top="2" left="2" right="2">			
+			<mx:Label id="titleLabel" text="CRM Gadget" top="0" left="4" />
+			<mx:Button styleName="iconMinimize" height="16" width="16" top="2" right="36" click="minimize()"/>
+			<mx:Button styleName="iconMaximize" height="16" width="16" top="2" right="20" click="viewRestoreMaxWindow()"/>
+			<mx:Button styleName="iconClose" height="16" width="16" top="2" right="4" click="closeMain();"/>
+		</mx:Canvas>
+						  
 		<mx:VBox width="100%" height="100%" paddingTop="35" paddingLeft="10" paddingRight="10" paddingBottom="50">
 			<mx:HBox width="100%">
 				<mx:CheckBox id="chkFeed" label="Enable Feed" click="chkFeed_clickHandler(event)"/>
@@ -2006,6 +2038,11 @@
 			</mx:HBox>
 		</mx:Canvas>
 		<control:BarCodeReader id="barcodeReader" height="0" width="0" visible="false"/>
+		<mx:VBox horizontalAlign="right" verticalAlign="bottom" width="100%" height="100%" paddingBottom="1" paddingRight="1">
+			<mx:Image  source="@Embed('/assets/resize.png')" >
+				
+			</mx:Image>
+		</mx:VBox>
 	</mx:Canvas>
 	
 </mx:Window>
