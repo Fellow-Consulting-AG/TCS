@@ -295,6 +295,14 @@ package gadget.sync.incoming {
 				
 				searchSpec += "[Status]&lt;&gt; \'Closed\' AND [Status]&lt;&gt; \'Cancelled\'";
 			}
+			//#7195
+			if(entityIDour=="User"){
+				if(! StringUtils.isEmpty(searchSpec)){
+					searchSpec += " AND ";
+				}
+				
+				searchSpec += "[Status]= \'Active\'";
+			}
 			return searchSpec;
 			
 		}
