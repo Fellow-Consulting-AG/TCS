@@ -413,6 +413,7 @@ package gadget.util
 			var newObj:Object = newItem==null?new Object():newItem();
 			if(selectedItem==null) selectedItem = grid.selectedItem;
 			var miniDetail:MiniDetail;
+			
 			detail.updateItemFields();
 			if (status==i18n._('GLOBAL_ADD')) {
 				miniDetail = new MiniDetail();
@@ -441,6 +442,7 @@ package gadget.util
 					objectSQLQuery.newRecord = param;
 					refreshGrid(detail,grid,objectSQLQuery);
 				};
+				miniDetail.detail = detail;
 				WindowManager.openModal(miniDetail);
 			}else if(status==i18n._('GLOBAL_DELETE') && selectedItem != null){
 				//CRO 05.01.2011
@@ -969,7 +971,7 @@ package gadget.util
 						spiner.visible = true;
 						spiner.includeInLayout = true;
 						spiner.play();
-						new JDIncomingServiceHistory("[CustomText36]=\'"+detail.item['CustomText36']+"\'",
+						new JDIncomingServiceHistory("[CustomText36]=\'"+detail.item['CustomText36']+"\' AND Status = '\'Closed\'",
 							function():void{
 							refreshSqlGrid(detail,grid,objectSQLQuery);		
 							serviceHistory.enabled=true;
