@@ -977,6 +977,9 @@ package gadget.util
 							spiner.visible = false;
 							spiner.includeInLayout = false;
 						}).start();	
+					}else{
+						//This record has no Equipment Number. Hisory cannot be fetched.
+						Alert.show(i18n._("GLOBAL_THIS_RECORD_HAS_NO_EQUIPMENT_NUMBER"),i18n._("SYNCHRONIZE_ALERT_WARNING"), Alert.OK,detail, null, null, Alert.OK);	
 					}
 				});
 			}
@@ -1058,7 +1061,7 @@ package gadget.util
 			
 		    //Bug fixing 615 CRO
 			if(!isReadOnlyGrid && (!readonly || (detail.entity == Database.serviceDao.entity && objectSQLQuery.entity == Database.serviceDao.entity))){
-				if(enabled){
+				//if(enabled){ //CR #9173 CRO
 					grid.addEventListener(MouseEvent.DOUBLE_CLICK, function(e:MouseEvent):void{
 						//Bug fixing 502 CRO
 						var selectedEntity:String = objectSQLQuery.entity;
@@ -1074,7 +1077,7 @@ package gadget.util
 						
 						
 					});
-				}
+				//}
 				if(serviceHistory!=null){
 					hbox.addChild(spiner);
 					hbox.addChild(serviceHistory);

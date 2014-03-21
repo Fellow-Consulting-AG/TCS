@@ -215,11 +215,11 @@ package gadget.util {
 		}
 		//#934 CRO 
 		//CR #6790 extraCriteria + "(CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and filename like '%.pdf' or filename like '%.doc' or filename like '%.docx')";  // AND CustomText1='On Site' CRO
-		public static function checkWarningServiceRequest(extraCriteria:String=""):ArrayCollection{
+		public static function checkWarningServiceRequest():ArrayCollection{
 			if( UserService.DIVERSEY==UserService.getCustomerId() && Database.preferencesDao.getBooleanValue("tcs_closing_enable")){
 				var message:String = "";
 				var columns:ArrayCollection = new ArrayCollection([{element_name:"gadget_id"}]);   //#1390 filename like '%.doc' or filename like '%.docx'
-				var filter:String = extraCriteria + "(CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and filename like '%.pdf' or filename like '%.doc' or filename like '%.docx')";  // AND CustomText1='On Site'
+				var filter:String = "(OwnerId = (select id from user)) AND (CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and filename like '%.pdf' or filename like '%.doc' or filename like '%.docx')";  // AND CustomText1='On Site'
 				var data:ArrayCollection = Database.getDao(Database.serviceDao.entity).findAll(columns,filter);				
 				return data;
 			}
