@@ -11,12 +11,15 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import com.hurlant.util.asn1.parser.boolean;
+			
 			import gadget.dao.BaseDAO;
 			import gadget.dao.DAOUtils;
 			import gadget.dao.Database;
 			import gadget.dao.PreferencesDAO;
 			import gadget.i18n.i18n;
 			import gadget.service.PicklistService;
+			import gadget.service.RightService;
 			import gadget.service.SupportService;
 			import gadget.service.UserService;
 			import gadget.util.FieldUtils;
@@ -41,7 +44,7 @@
 			[Bindable] public var item:Object;
 			[Bindable] public var newItem:Function;
 			public var arrayDefaultObject:Array;
-			
+			[Bindable] public var detail:Detail;
 			public var refreshGrid:Function;
 			
 			private var inputFields:ArrayCollection = null;
@@ -67,6 +70,10 @@
 					createNewBtn.width = 0;
 				}
 				initForm();
+				if(detail != null){
+					createBtn.enabled =  detail.isEnableBtnUpdate;
+				}
+				
 				this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN,keyDown);
 			}
 			private function keyDown(evt:KeyboardEvent):void {
