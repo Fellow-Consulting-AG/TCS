@@ -71,7 +71,7 @@
 				}
 				initForm();
 				if(detail != null){
-					createBtn.enabled =  detail.isEnableBtnUpdate;
+					createBtn.enabled =  !detail.isDisableBtnUpdate;
 				}
 				
 				this.systemManager.stage.addEventListener(KeyboardEvent.KEY_DOWN,keyDown);

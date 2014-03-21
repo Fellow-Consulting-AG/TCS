@@ -77,6 +77,7 @@
 			[Bindable] public var serviceRequest:Object;
 			[Bindable] private var width1:int ;
 			[Bindable] public var refreshDetail:Function;
+			[Bindable] public var disableButtonUpdateDetail:Function;
 			[Bindable] private var height1:int;
 			[Bindable] private var paddingTop:int;
 			
@@ -102,8 +103,12 @@
 						obj.local_update = new Date().getTime();
 						obj.CustomText4 = txtUserName.text;
 						Database.getDao(Database.serviceDao.entity).update(obj);
+						
 						if(refreshDetail!=null){
 							refreshDetail();
+						}
+						if(disableButtonUpdateDetail != null){
+							disableButtonUpdateDetail();
 						}
 					}
 					
@@ -336,6 +341,7 @@
 				}
 				
 				
+					
 				doc.close();
 				
 				try{

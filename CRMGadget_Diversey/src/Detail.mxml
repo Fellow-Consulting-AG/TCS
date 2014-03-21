@@ -112,7 +112,7 @@
 			
 			private var isShowFeed:Boolean;
 			private var currentUser:Object; 
-			
+			private var buttonBar:ButtonBar=null;
 			private const CALL:int =2;
 			private const APPOINTMENT:int=1;
 			private const TASK:int=0;
@@ -138,7 +138,7 @@
 			private var srOldStatus:String;
 			private var oldDGD:String;
 			private var serviceEntity:String=Database.serviceDao.entity;
-			public var isEnableBtnUpdate:Boolean = true;
+			public var isDisableBtnUpdate:Boolean = true;
 			private static const EXTENSION_IMAGE_FILE:Array = [".PNG", ".png", ".GIF", ".gif", ".jpg", ".JPG"];
 			
 			public static const DUMMY_OID:String = "dummy";
@@ -222,6 +222,7 @@
 				
 				groupingWindow.serviceRequest = item;
 				groupingWindow.refreshDetail = refreshData;
+				groupingWindow.disableButtonUpdateDetail = disableUdateButton;
 				WindowManager.openModal(groupingWindow);
 			}
 			
@@ -608,7 +609,7 @@
 				}
 				
 				actionCanvas.removeAllChildren();
-				var buttonBar:ButtonBar = new ButtonBar();
+				buttonBar = new ButtonBar();
 				buttonBar.setStyle("right", "0");
 				//buttonBar.percentWidth = 100;
 				var obj:Object = null;
@@ -618,7 +619,7 @@
 				attachmentBtn.enabled = canUpdate;
 				buttons.addItem({label: CANCEL_STR, icon:ImageUtils.cancelIcon}); 
 				var disable:Boolean = create ? !canCreate : !canUpdate;
-				isEnableBtnUpdate = disable;
+				
 				//mony-bug#50---only jd user
 				var oidName:String = DAOUtils.getOracleId(entity);
 				var odiVal:String=item[oidName] as String;
@@ -642,6 +643,7 @@
 					// hide button groupingPDF, groupPDFPreview
 					showGroupingPDFBtn = false;
 				}
+				isDisableBtnUpdate = disable;
 				buttons.addItem({label: create? CREATE_STR : UPDATE_STR, icon: create? ImageUtils.addIcon : ImageUtils.editIcon, disabled: disable});
 
 				buttonBar.dataProvider = buttons;
@@ -659,7 +661,20 @@
 				}
 				showKitchenReport = UserService.getCustomerId() == UserService.DIVERSEY;
 			}
+			private function disableUdateButton():void{
 			
+				if(buttonBar != null){
+					for(var i:int = 0; i<buttonBar.dataProvider.length; i++){
+						var data:Object = buttonBar.dataProvider[i];
+						if(data.label == UPDATE_STR){
+							var btn:Button = buttonBar.getChildAt(i) as Button;
+							btn.enabled = false;
+							break;
+						}
+					}
+				}
+				
+			}
 			private function getComboData():ArrayCollection{
 				var listTransaction:ArrayCollection = Database.transactionDao.listTransaction();
 	            var comboList:ArrayCollection = new ArrayCollection();
