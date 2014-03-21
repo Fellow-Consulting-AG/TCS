@@ -223,7 +223,7 @@
 			public function closeMain():void{
 				var lst:ArrayCollection = Utils.checkWarningServiceRequest();
 				if( lst != null && lst.length >0){
-					Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"), Alert.OK | Alert.CANCEL, this, onClosingEvent, null, Alert.OK);	
+					Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"), Alert.OK, this, null, null, Alert.OK);	
 				}else{
 					cleanDatabaseAndExit();
 				}
