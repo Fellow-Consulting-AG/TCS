@@ -971,7 +971,7 @@ package gadget.util
 						spiner.visible = true;
 						spiner.includeInLayout = true;
 						spiner.play();
-						new JDIncomingServiceHistory("[CustomText36]=\'"+detail.item['CustomText36']+" AND [Status] = \'Closed\'",
+						new JDIncomingServiceHistory("[CustomText36]=\'"+detail.item['CustomText36']+"\' AND [Status] = \'Closed\'",
 							function():void{
 							refreshSqlGrid(detail,grid,objectSQLQuery);		
 							serviceHistory.enabled=true;

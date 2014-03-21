@@ -92,17 +92,18 @@
 			//Update field Order final status to Technical Completed when the grouping pdf has attached #935 CRO
 			private function updateComplettion(lstService:ArrayCollection):void{
 				if(serviceRequest != null){ //single report
-					var obj:Object = Database.getDao(Database.serviceDao.entity).findByGadgetId(serviceRequest.gadget_id);
-					if(obj != null){
+					//bug#7304--update all fields from detail screen
+					//var obj:Object = Database.getDao(Database.serviceDao.entity).findByGadgetId(serviceRequest.gadget_id);
+					if(!StringUtils.isEmpty(serviceRequest.gadget_id)){
 						//update onloy field tcs offline status
-						obj.CustomPickList5 = "Completed";
-						obj.Status = "Closed";
+						//obj.CustomPickList5 = "Completed";
+						//obj.Status = "Closed";
 						serviceRequest.CustomPickList5 = "Completed";
 						//#1118 CRO
 						serviceRequest.Status = "Closed";
-						obj.local_update = new Date().getTime();
-						obj.CustomText4 = txtUserName.text;
-						Database.getDao(Database.serviceDao.entity).update(obj);
+						serviceRequest.local_update = new Date().getTime();
+						serviceRequest.CustomText4 = txtUserName.text;
+						Database.getDao(Database.serviceDao.entity).update(serviceRequest);
 						
 						if(refreshDetail!=null){
 							refreshDetail();
