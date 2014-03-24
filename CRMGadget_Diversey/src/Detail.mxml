@@ -1124,7 +1124,8 @@
 				var isAlreadyFocus:Boolean = false;
 				
 				var functions:Object = new Object();
-				var pageIndex:int = 0;height =0;
+				var pageIndex:int = 0;
+				//height =0;
 				functions._countryChange = countryChange;
 				functions._finderClick = finderClick;
 				functions._upload = upload_;
@@ -1483,11 +1484,11 @@
 					}
 					if (rightFormL[p].getChildren().length == 0 && pageIndex == 0) {
 						// width = 500;
-						width = 660;
+						//width = 660;
 						vruleL[p].visible = false;
 						rightFormL[p].visible = false;
 					} else {
-						width = 980;
+						//width = 980;
 						vruleL[p].visible = true;
 						rightFormL[p].visible = true;
 						
@@ -1500,13 +1501,13 @@
 					innerCanvasL[p].height = heightMax + 15;
 					vruleL[p].height = heightMax;
 					heightMax += 138;
-					height = heightMax>height?heightMax:height; 
+					//height = heightMax>height?heightMax:height; 
 					
 				}
 				viewstack.setStyle("tabHeight",pageIndex==0?0:24);
 				if(pageIndex==0) height -=24;
 				
-				PreferenceUtils.WindowScreenBounds(this);				
+				//PreferenceUtils.WindowScreenBounds(this);				
 				detailCanvas.height = height;
 				modified = false;
 				this.enabled = true;
