@@ -222,7 +222,7 @@
 				
 				groupingWindow.serviceRequest = item;
 				groupingWindow.refreshDetail = refreshData;
-				groupingWindow.disableButtonUpdateDetail = disableUdateButton;
+				groupingWindow.postExport = postExport;
 				WindowManager.openModal(groupingWindow);
 			}
 			
@@ -661,7 +661,7 @@
 				}
 				showKitchenReport = UserService.getCustomerId() == UserService.DIVERSEY;
 			}
-			private function disableUdateButton():void{
+			private function postExport(obj:Object):void{
 			
 				if(buttonBar != null){
 					for(var i:int = 0; i<buttonBar.dataProvider.length; i++){
@@ -672,6 +672,11 @@
 							break;
 						}
 					}
+				}
+				
+				//refresh list after export
+				if(refreshFunction!=null){
+					refreshFunction(obj);
 				}
 				
 			}

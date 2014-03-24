@@ -77,7 +77,7 @@
 			[Bindable] public var serviceRequest:Object;
 			[Bindable] private var width1:int ;
 			[Bindable] public var refreshDetail:Function;
-			[Bindable] public var disableButtonUpdateDetail:Function;
+			[Bindable] public var postExport:Function;
 			[Bindable] private var height1:int;
 			[Bindable] private var paddingTop:int;
 			
@@ -108,8 +108,8 @@
 						if(refreshDetail!=null){
 							refreshDetail();
 						}
-						if(disableButtonUpdateDetail != null){
-							disableButtonUpdateDetail();
+						if(postExport != null){
+							postExport(serviceRequest);
 						}
 					}
 					
