@@ -906,7 +906,7 @@ package gadget.util
 			//Bug #1497 CRO
 			if(!detail.create &&(odiVal.indexOf('#')==-1) && detail.entity==Database.serviceDao.entity 
 				&& Database.preferencesDao.getBooleanValue(PreferencesDAO.ENABLE_SR_SYNC_ORDER_STATUS)){					
-				if(item.CustomPickList10=="STND" || item.CustomPickList10=="ACPT" || item.CustomPickList11=="TECO"  ){  
+				if(item.CustomPickList10=="STND" || item.CustomPickList10=="ACPT" || item.CustomPickList11=="TECO" || item.Status =="Closed" ){  
 					enabled = false;
 				}
 			}
