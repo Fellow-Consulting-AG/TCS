@@ -928,25 +928,22 @@
 				</mx:columns>
 			</mx:DataGrid>
 			
-			<mx:Canvas id="buttonCanvas" height="75" bottom="10">
-			
-				<mx:HBox height="100%" width="100%">
-					
-					<mx:VBox>
+			<mx:Canvas id="buttonCanvas" height="65" bottom="10">
+				<mx:VBox height="100%">
+					<mx:HBox>	
 						<mx:Label text="{i18n._('GLOBAL_CUSTOMER')}"/>
-						<mx:Label text="{i18n._('GLOBAL_SELECT_LANGUAGE')}"/>
-					</mx:VBox>
-					<mx:VBox>
 						<mx:TextInput id="txtUserName"/>
-						<mx:HBox horizontalAlign="right">	
-							<mx:ComboBox id="languages" dataProvider="{language}"/>
-							<mx:LinkButton id="printPdf" toolTip="{i18n._('GLOBAL_GENERATE_REPORT_TO_PDF')}" icon="{groupingIcon}" click="startPrint(event,true);" />
-							<mx:LinkButton id="groupPDFPreview" icon="{previewIcon}" toolTip="{i18n._('GLOBAL_GROUPING_PDF_PREVIEW')}" click="startPrint(event,false);" visible="false"/>
-							<mx:LinkButton  id="startSign" visible="false" toolTip="{i18n._('GLOBAL_PEN_DIAGNOSTICS')}" icon="{epadSignIcon}" click="epadPanel.startSign_clickHandler(event);" />
-						</mx:HBox>
-					</mx:VBox>
-				</mx:HBox>
+					</mx:HBox>	
+					<mx:HBox >	
+						<mx:Label text="{i18n._('GLOBAL_SELECT_LANGUAGE')}"/>
+						<mx:ComboBox id="languages" dataProvider="{language}"/>
+						<mx:LinkButton id="printPdf" toolTip="{i18n._('GLOBAL_GENERATE_REPORT_TO_PDF')}" icon="{groupingIcon}" click="startPrint(event,true);" />
+						<mx:LinkButton id="groupPDFPreview" icon="{previewIcon}" toolTip="{i18n._('GLOBAL_GROUPING_PDF_PREVIEW')}" click="startPrint(event,false);" visible="false"/>
+						<mx:LinkButton id="startSign" visible="false" toolTip="{i18n._('GLOBAL_PEN_DIAGNOSTICS')}" icon="{epadSignIcon}" click="epadPanel.startSign_clickHandler(event);" />
+					</mx:HBox>	
+				</mx:VBox>
 			</mx:Canvas>
+			
 			<mx:Canvas id="signCanvas" >
 				<mx:HBox paddingLeft="100">
 					<control:EpadSignPDF id="epadPanel" height="0" width="100"  groupingPDF="{this}"/>
