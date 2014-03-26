@@ -16,6 +16,8 @@ package gadget.dao
 		private var stmtUpdateStatusModified:SQLStatement;
 		private var stmtCheckPdfAtt:SQLStatement;
 		private var stmtSelectServiceNotComplete:SQLStatement;
+		private var stmtFindCreated:SQLStatement;
+		private var stmtFindUpdated:SQLStatement;
 		
 		public function ServiceDAO(sqlConnection:SQLConnection, work:Function) {
 			super(work, sqlConnection, {
@@ -45,6 +47,16 @@ package gadget.dao
 			stmtSelectServiceNotComplete.text = "SELECT 'Service Request' gadget_type,* FROM "+tableName +" WHERE status = 'Open' OR local_update is not null";
 			
 			
+			// Find all items updated locally
+			stmtFindUpdated = new SQLStatement();
+			stmtFindUpdated.sqlConnection = sqlConnection;
+			stmtFindUpdated.text = "SELECT '" + entity + "' gadget_type, *, " + DAOUtils.getNameColumn(entity) + " name FROM " + tableName + " WHERE local_update is not null AND (deleted = 0 OR deleted IS null) AND gadget_id NOT IN(select gadget_id from service where (CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and (filename like '%.pdf' or filename like '%.doc' or filename like '%.docx'))) ORDER BY local_update LIMIT :limit OFFSET :offset";	
+			
+			// Find all items created locally
+			stmtFindCreated = new SQLStatement();
+			stmtFindCreated.sqlConnection = sqlConnection;
+			//VAHI the "OR ... IS NULL" is a workaround to make Expenses work
+			stmtFindCreated.text = "SELECT '" + entity + "' gadget_type, *, " + DAOUtils.getNameColumn(entity) + " name FROM " + tableName + " WHERE ( (" + fieldOracleId + " >= '#' AND " + fieldOracleId + " <= '#zzzz') OR " + fieldOracleId + " IS NULL ) AND (deleted = 0 OR deleted IS null) AND gadget_id NOT IN(select gadget_id from service where (CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and (filename like '%.pdf' or filename like '%.doc' or filename like '%.docx'))) ORDER BY  " + fieldOracleId + " LIMIT :limit OFFSET :offset";	
 			
 			
 			
@@ -99,6 +111,23 @@ package gadget.dao
 			return "Service Request";
 		}
 		
+		override public function findCreated(offset:int, limit:int):ArrayCollection {
+			stmtFindCreated.parameters[":offset"] = offset; 
+			stmtFindCreated.parameters[":limit"] = limit; 
+			exec(stmtFindCreated, false);
+			var list:ArrayCollection = new ArrayCollection(stmtFindCreated.getResult().data);
+			//checkBindPicklist(stmtFindCreated.text,list);
+			return list;
+		}
+		
+		override public function findUpdated(offset:int, limit:int):ArrayCollection {
+			stmtFindUpdated.parameters[":offset"] = offset; 
+			stmtFindUpdated.parameters[":limit"] = limit; 
+			exec(stmtFindUpdated, false);
+			var list:ArrayCollection = new ArrayCollection(stmtFindUpdated.getResult().data);
+			//checkBindPicklist(stmtFindUpdated.text,list);
+			return list;
+		}
 		
 		
 		override public function getOutgoingIgnoreFields():ArrayCollection{

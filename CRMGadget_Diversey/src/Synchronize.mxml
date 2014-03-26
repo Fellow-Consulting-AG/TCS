@@ -221,64 +221,76 @@
 		}
 			
 			
-			
-		public function syncData():void {
+		private function doSyncData():void{
+			var valid:Boolean = true;
 			var preference:Object = Database.preferencesDao.read();
+			if(valid) {
+				new CacheUtils("right").clear();
+				new CacheUtils("field").clear();
+				if (mainWindow.syncProcess == null || mainWindow.syncProcess.finished) {
+					clearLog();					
+					Database.syncNumberDao.increaseSyncNumber();
+					logInfo(new LogEvent(LogEvent.INFO, i18n._('SYNCHRONIZE_SYNCHRONIZATION_STARTED')));					
+					localReport = new ArrayCollection();
+					serverReport = new ArrayCollection();	
+					mainWindow.syncBtn1.visible = true;
+					mainWindow.syncBtn1.includeInLayout = true;
+					mainWindow.syncBtn2.visible = false;
+					mainWindow.syncBtn2.includeInLayout = false;				
+					checkObjects=null;
+					if(!isSRSyncnow){
+						if(Database.preferencesDao.getBooleanValue(PreferencesDAO.ENABLE_CHECK_CONFLICTS,0)){
+							var enableTrans:ArrayCollection = Database.transactionDao.listEnabledTransaction();
+							checkObjects=new Array();
+							for each(var obj:Object in enableTrans){						
+								checkObjects.push(new CheckConflictObject(obj.entity));
+							}							
+						}
+						
+						mainWindow.syncProcess =new SyncProcess(isFullSync(),metadata.selected,processParallel.selected,false,null,checkObjects);
+					}else{
+						mainWindow.syncProcess = new SyncProcess(false,false,false,isSRSyncnow,records);
+						mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons],completed);
+					}
+					initButtons();				
+					//reset session
+					SSOUtils.resetSession();
+					var login:LoginCRM = new LoginCRM(testConnectionSuccess, testConnectionError);
+					login.loginCRM(preference, false);
+					mainWindow.checkTips();
+				}
+				btnClose.label = i18n._('SYNCHRONIZE_BUTTON_RUN_IN_BACKGROUND');
+				if(isSRSyncnow) this.close(); // run synchronize window in background
+			}
+			//				else {
+			//					var body:String = i18n._("COMPANY_NAME") + ": " + credential.company + "\n" + i18n._("URL") + ": " + credential.shorturl + "\n" + i18n._("PRODUCT_NAME") + ": " + credential.device;
+			//					var dtoMail:DtoMail = new DtoMail("sales@fellow-consulting.de", i18n._("LICENSE_ACTIVATION"), body);
+			//					var mail:SendMail = new SendMail(dtoMail);
+			//					mail.send();
+			//				}
+			//			});
+		}
+		public function syncData():void {
+			
 //			var credential:Credential = new Credential(preference.sodhost, preference.sodlogin, preference.sodpass, "CRM Gadget");
 //			license = new LicenseManager(credential);
 //			license.isValid(function(valid:Boolean):void {
 			
 			var lst:ArrayCollection = Utils.checkWarningServiceRequest();
 			if( lst != null && lst.length >0){
-			    Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"),Alert.OK,this);	
-				return;
-			}
-			var valid:Boolean = true;
-				if(valid) {
-					new CacheUtils("right").clear();
-					new CacheUtils("field").clear();
-					if (mainWindow.syncProcess == null || mainWindow.syncProcess.finished) {
-						clearLog();					
-						Database.syncNumberDao.increaseSyncNumber();
-						logInfo(new LogEvent(LogEvent.INFO, i18n._('SYNCHRONIZE_SYNCHRONIZATION_STARTED')));					
-						localReport = new ArrayCollection();
-						serverReport = new ArrayCollection();	
-						mainWindow.syncBtn1.visible = true;
-						mainWindow.syncBtn1.includeInLayout = true;
-						mainWindow.syncBtn2.visible = false;
-						mainWindow.syncBtn2.includeInLayout = false;				
-						checkObjects=null;
-						if(!isSRSyncnow){
-							if(Database.preferencesDao.getBooleanValue(PreferencesDAO.ENABLE_CHECK_CONFLICTS,0)){
-								var enableTrans:ArrayCollection = Database.transactionDao.listEnabledTransaction();
-								checkObjects=new Array();
-								for each(var obj:Object in enableTrans){						
-									checkObjects.push(new CheckConflictObject(obj.entity));
-								}							
-							}
-							
-							mainWindow.syncProcess =new SyncProcess(isFullSync(),metadata.selected,processParallel.selected,false,null,checkObjects);
-						}else{
-							mainWindow.syncProcess = new SyncProcess(false,false,false,isSRSyncnow,records);
-							mainWindow.syncProcess.bindFunctions(logInfo, logProgress, logCount, syncEvent, [mainWindow.syncEnd, initButtons],completed);
-						}
-						initButtons();				
-						//reset session
-						SSOUtils.resetSession();
-						var login:LoginCRM = new LoginCRM(testConnectionSuccess, testConnectionError);
-						login.loginCRM(preference, false);
-						mainWindow.checkTips();
+			   // Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"),Alert.OK,this);	
+				
+				Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"),Alert.OK|Alert.CANCEL,this,function(event:CloseEvent):void {
+					if( event.detail == Alert.OK ) {
+						doSyncData();
+					}else{
+						return;
 					}
-					btnClose.label = i18n._('SYNCHRONIZE_BUTTON_RUN_IN_BACKGROUND');
-					if(isSRSyncnow) this.close(); // run synchronize window in background
-				}
-//				else {
-//					var body:String = i18n._("COMPANY_NAME") + ": " + credential.company + "\n" + i18n._("URL") + ": " + credential.shorturl + "\n" + i18n._("PRODUCT_NAME") + ": " + credential.device;
-//					var dtoMail:DtoMail = new DtoMail("sales@fellow-consulting.de", i18n._("LICENSE_ACTIVATION"), body);
-//					var mail:SendMail = new SendMail(dtoMail);
-//					mail.send();
-//				}
-//			});
+				});
+				
+				
+			}
+			
 		}
 			
 		private function toggleSpinner(on:Boolean):void {

@@ -630,7 +630,7 @@ package gadget.dao
 			return sql;
 		}
 		
-		private function get fieldOracleId():String {
+		protected function get fieldOracleId():String {
 			return DAOUtils.getOracleId(entity);
 		}
 		
