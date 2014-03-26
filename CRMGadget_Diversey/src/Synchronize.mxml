@@ -283,12 +283,12 @@
 				Alert.show(i18n._("SERVICE_JD_REQUIRE_PDF_ATT"),i18n._("SYNCHRONIZE_ALERT_WARNING"),Alert.OK|Alert.CANCEL,this,function(event:CloseEvent):void {
 					if( event.detail == Alert.OK ) {
 						doSyncData();
-					}else{
-						return;
 					}
 				});
 				
 				
+			}else{
+				doSyncData();
 			}
 			
 		}
