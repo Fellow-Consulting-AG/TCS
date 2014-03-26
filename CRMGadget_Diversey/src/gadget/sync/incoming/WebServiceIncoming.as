@@ -561,6 +561,7 @@ package gadget.sync.incoming {
 					trace('HAV',getTransactionName(), info.rowid,tmpOb[modName],info.name);
 				}
 			}
+			postImportRecord(tmpOb);
 			//update language info
 			if(this is IncomingCurrentUserData){
 				LocaleService.updateLanguageInfo(tmpOb);
@@ -572,6 +573,9 @@ package gadget.sync.incoming {
 			return 1;
 		}
 		
+		protected function postImportRecord(tmpOb:Object):void{
+			//implement at sub class
+		}
 		
 		protected function initBeforeSave(obj:Object):void{
 			//implement at sub class
