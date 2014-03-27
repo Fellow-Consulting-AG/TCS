@@ -71,7 +71,8 @@
 				{label :"Portuguese",field:"CustomText6",languageCode:"PTG",index:3},
 				{label:"French",field:"CustomText3",languageCode:"FRA",index:4},
 				{label:"Danish",field:"CustomText0",languageCode:"DAN",index:5},
-				{label:"Swedish",field:"CustomText8",languageCode:"SVE",index:6}]);
+				{label:"Swedish",field:"CustomText8",languageCode:"SVE",index:6},
+				{label:"Spanish",field:"CustomText7",languageCode:"ESN",index:7}]);
 			private var isPrinting:Boolean; // To check preview or print by grouping report
 			[Bindable] public var isPreview:Boolean; // To check preview or print by single report
 			[Bindable] public var serviceRequest:Object;
