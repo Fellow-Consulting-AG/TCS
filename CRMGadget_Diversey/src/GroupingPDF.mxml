@@ -146,7 +146,7 @@
 					groupingGrid.percentHeight = 0;
 					groupingGrid.percentWidth =0 ;
 					width1 = 350;
-					height1 = 150;
+					height1 = 210;
 					paddingTop = 0;
 					//#959 CRO
 					fileName = sr[0].IndexedShortText1 + "-" +sr[0].CustomText40+ ".pdf"; //display JDI TCS Order Number
