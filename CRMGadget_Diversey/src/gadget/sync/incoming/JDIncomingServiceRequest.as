@@ -25,12 +25,22 @@ package gadget.sync.incoming
 			//incoming product
 			if(searchSpec!=''){
 				
-				new JDIncomingServiceHistory(searchSpec,null,Database.customObject1Dao.entity).start();
-				new JDIncomingServiceHistory(searchSpec,null,Database.customObject2Dao.entity).start();
+				new JDIncomingServiceHistory(searchSpec,function():void{
+					new JDIncomingServiceHistory(searchSpec,function():void{
+						searchSpec='';
+						i=0;
+						super.nextPage(lastPage);
+					
+					},Database.customObject2Dao.entity).start();
+				
+				},Database.customObject1Dao.entity).start();
+				
+			}else{
+				searchSpec='';
+				i=0;
+				super.nextPage(lastPage);	
 			}
-			searchSpec='';
-			i=0;
-			super.nextPage(lastPage);
+			
 			
 			
 			
