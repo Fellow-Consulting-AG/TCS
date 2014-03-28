@@ -435,6 +435,7 @@
 						item["deleted"] = false;
 						item["error"] = false;
 						item["OwnerId"] = Database.userDao.read().id;
+						item[BaseDAO.TEMP_COL]=true;
 						var dao:BaseDAO = Database.getDao(entity);
 						try {
 							dao.insert(item);

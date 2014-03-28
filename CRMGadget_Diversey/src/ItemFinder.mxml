@@ -62,10 +62,9 @@
 					//bug#5940--hack code to get field description by user's lange
 					var langCode:String = Database.allUsersDao.ownerUser()['LanguageCode'];
 					if(!StringUtils.isEmpty(langCode)){
-						switch(langCode){
-							case 'ENG':
-							case 'ENU':
-								return ['CustomText9'];
+						switch(langCode){							
+							case 'ESN':
+								return ['CustomText7'];
 							case 'NLD':
 								return ['CustomText1'];
 							case 'DEU':
@@ -78,6 +77,8 @@
 								return ['CustomText0'];
 							case 'SVE':
 								return ['CustomText8'];
+							default:
+								return ['CustomText9'];
 						}
 						
 						

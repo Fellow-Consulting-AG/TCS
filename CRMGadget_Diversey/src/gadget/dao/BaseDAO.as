@@ -16,6 +16,7 @@ package gadget.dao
 	import org.flexunit.runner.Result;
 	
 	public class BaseDAO extends BaseQuery implements DAO {
+		public static const  TEMP_COL:String = 'is_temp';
 		private var stmtSum:SQLStatement;
 		private var stmtUpdateByFieldRelation:SQLStatement;
 		private var stmtUpdateByField:SQLStatement;
@@ -63,6 +64,7 @@ package gadget.dao
 				deleted: "boolean",
 				error: "boolean",
 				ood_lastmodified:"string",
+				is_temp:"boolean",
 				sync_number: "integer",
 				important: "integer",
 				favorite: "boolean"
@@ -277,7 +279,19 @@ package gadget.dao
 			
 		}
 		
+		public function updateTempField(temp:Boolean):void{
+			var updateTempStmt:SQLStatement = new SQLStatement();
+			updateTempStmt.sqlConnection = sqlConnection;
+			updateTempStmt.text = "UPDATE "+tableName+" SET "+TEMP_COL+"=:"+TEMP_COL +" WHERE "+TEMP_COL+"=:oldVal";
+			updateTempStmt.parameters[":oldVal"]=!temp;
+			updateTempStmt.parameters[":"+TEMP_COL]=temp;
+			exec(updateTempStmt);
+		}
 		
+		public function deleteTempRecordByParentId(criteria:Object):void{
+			criteria[TEMP_COL] = true;
+			deleteByParentId(criteria);
+		}
 		
 		public function deleteByParentId(criteria:Object):void{
 			var where:String="";			
@@ -350,7 +364,7 @@ package gadget.dao
 				order_by = daoStructure.order_by? daoStructure.order_by + ' desc' : 'uppername';
 			}			
 //			stmtFindAll.text = "SELECT '" + entity + "' gadget_type, local_update, gadget_id, error,sync_number, "+colOODLastModified + fieldOracleId + cols + " FROM " + tableName + " WHERE " + (StringUtils.isEmpty(filter) ? "" : filter + " AND ") + "deleted != 1 ORDER BY " + order_by + ( limit==0? "":" LIMIT " + limit );
-			stmtFindAll.text = "SELECT '" + entity + "' gadget_type, local_update, gadget_id, error,sync_number, "+colOODLastModified + fieldOracleId + cols + " FROM " + tableName + " WHERE " + (StringUtils.isEmpty(filter) ? "" : filter + " AND ") + "deleted != 1 " + (StringUtils.isEmpty(group_by) ? "" : "GROUP BY " + group_by) + " ORDER BY " + order_by + ( limit==0? "":" LIMIT " + limit );
+			stmtFindAll.text = "SELECT '" + entity + "' gadget_type, local_update, gadget_id, error,sync_number, is_temp, "+colOODLastModified + fieldOracleId + cols + " FROM " + tableName + " WHERE " + (StringUtils.isEmpty(filter) ? "" : filter + " AND ") + "deleted != 1 " + (StringUtils.isEmpty(group_by) ? "" : "GROUP BY " + group_by) + " ORDER BY " + order_by + ( limit==0? "":" LIMIT " + limit );
 			exec(stmtFindAll, false);
 			var items:ArrayCollection = new ArrayCollection(stmtFindAll.getResult().data);
 			// add a specific item when selectedId arg is provided
@@ -364,7 +378,7 @@ package gadget.dao
 					}
 				}
 				if (!found) {
-					stmtFindAll.text = "SELECT '" + entity + "' gadget_type, local_update, gadget_id, error, "+colOODLastModified + fieldOracleId + cols + " FROM " + tableName + " WHERE " + (StringUtils.isEmpty(filter) ? "" : filter + " AND ") + "(deleted = 0 OR deleted is null) AND gadget_id =" + selectedId;
+					stmtFindAll.text = "SELECT '" + entity + "' gadget_type, local_update, gadget_id, error, is_temp, "+colOODLastModified + fieldOracleId + cols + " FROM " + tableName + " WHERE " + (StringUtils.isEmpty(filter) ? "" : filter + " AND ") + "(deleted = 0 OR deleted is null) AND gadget_id =" + selectedId;
 					exec(stmtFindAll);
 					items.addAll(new ArrayCollection(stmtFindAll.getResult().data));
 				}
@@ -591,7 +605,7 @@ package gadget.dao
 		}
 	
 		private function  insertQuery(updateFF:Boolean=true):String {
-			var sql:String = 'INSERT INTO ' + tableName + "(local_update, deleted, error, sync_number,ood_lastmodified";
+			var sql:String = 'INSERT INTO ' + tableName + "(local_update, deleted, error, sync_number,ood_lastmodified,"+TEMP_COL;
 			var i:int;
 			var field:Object;
 			if (daoStructure.search_columns) {
@@ -603,7 +617,7 @@ package gadget.dao
 			for each (field in listField) {
 				sql += ", " + field.element_name;
 			}
-			sql += ") VALUES (:local_update, :deleted, :error, :sync_number,:ood_lastmodified";
+			sql += ") VALUES (:local_update, :deleted, :error, :sync_number,:ood_lastmodified,:"+TEMP_COL;
 			if (daoStructure.search_columns) {
 				for (i = 0; i < daoStructure.search_columns.length; i++) {
 					sql += ", :" + getUppernameCol(i);
@@ -617,7 +631,7 @@ package gadget.dao
 		}
 		
 		private function updateQuery(updateFF:Boolean=true):String {
-			var sql:String = 'UPDATE ' + tableName + " SET local_update = :local_update, deleted = :deleted, error = :error, sync_number = :sync_number,ood_lastmodified =:ood_lastmodified";
+			var sql:String = 'UPDATE ' + tableName + " SET local_update = :local_update, deleted = :deleted, error = :error, sync_number = :sync_number,ood_lastmodified =:ood_lastmodified,is_temp=:is_temp";
 			if (daoStructure.search_columns) {
 				for (var i:int = 0; i < daoStructure.search_columns.length; i++) {
 					sql += ", " + getUppernameCol(i) + " = :" + getUppernameCol(i);
@@ -677,6 +691,7 @@ package gadget.dao
 			stmt.parameters[':error'] = object.error;
 			stmt.parameters[':sync_number'] = object.sync_number;
 			stmt.parameters[':ood_lastmodified']=object.ood_lastmodified;
+			stmt.parameters[':'+TEMP_COL]=object[TEMP_COL];
 			exec(stmt);
 		}
 

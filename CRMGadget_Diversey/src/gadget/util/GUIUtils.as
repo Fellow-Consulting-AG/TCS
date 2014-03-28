@@ -815,6 +815,7 @@ package gadget.util
 					}					
 					
 					Database.getDao(object.relation.supportTable).insert(newObj);
+					newObj[BaseDAO.TEMP_COL]=true;
 					newObj = Database.getDao(object.relation.supportTable).selectLastRecord()[0];
 					// by default, sets the OracleId as gadget_id
 					newObj['Id'] = "#" + newObj.gadget_id;

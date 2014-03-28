@@ -273,6 +273,7 @@
 					item[DAOUtils.getOracleId(entity)] = null;
 					item["deleted"] = false;
 					item["error"] = false;
+					item[BaseDAO.TEMP_COL]=true;
 					//VAHI this only is correct for objects with an OwnerId property.
 					// So this should be done on a "create()" method, not here.
 					item["OwnerId"] = Database.userDao.read().id;

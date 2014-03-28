@@ -137,7 +137,7 @@ package gadget.util
 						} else {
 							missing_col = true;
 							//except drop_table if missing column is ood_lastmodified 
-							if(col.toLocaleLowerCase()=='ood_lastmodified' || col.toLocaleLowerCase()=='important' || col.toLocaleLowerCase()=='favorite'){
+							if(col.toLocaleLowerCase()=='ood_lastmodified'||col.toLocaleLowerCase()=='is_temp' || col.toLocaleLowerCase()=='important' || col.toLocaleLowerCase()=='favorite'){
 								A.structure.drop_table=false;
 							}
 							trace("in table",A.table,"missing col",col);

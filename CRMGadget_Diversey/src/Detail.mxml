@@ -140,6 +140,7 @@
 			private var serviceEntity:String=Database.serviceDao.entity;
 			public var isDisableBtnUpdate:Boolean = true;
 			private static const EXTENSION_IMAGE_FILE:Array = [".PNG", ".png", ".GIF", ".gif", ".jpg", ".JPG"];
+			private var hasSave:Boolean = false;
 			
 			public static const DUMMY_OID:String = "dummy";
 			
@@ -148,7 +149,7 @@
 			private static const UPDATE_STR:String = i18n._('GLOBAL_UPDATE');
 			private static const CLOSE_STR:String = i18n._('GLOBAL_CLOSE');
 			private static const CANCEL_STR:String = i18n._('GLOBAL_CANCEL');
-			
+			private var listChild:ArrayCollection;
 			private var userOwner:Object;
 		    private function openConvertLead():void{
 				var convertLead:ConvertLead= new ConvertLead();
@@ -504,6 +505,7 @@
 						Database.feedEntityDAO.delete_( {'Entity':entity, 'Id':item['gadget_id']} );
 					}
 				}
+				hasSave=true;
 				
 				if(refreshHomTask != null) refreshHomTask(); //1243 CRO
 				refreshFunction(item);
@@ -661,6 +663,25 @@
 				}
 				showKitchenReport = UserService.getCustomerId() == UserService.DIVERSEY;
 			}
+			
+			override public function close():void{
+				if(hasSave){
+					//delete add new
+					for each(var subEntity:String in listChild){
+						
+						Database.getDao(subEntity).updateTempField(false);
+					}
+				}else{
+					//delete add new
+					for each(var cancelEntity:String in listChild){
+						
+						Database.getDao(cancelEntity).deleteTempRecordByParentId({});//delete all temp record
+					}
+				}
+				
+				super.close();				
+			}
+			
 			private function postExport(obj:Object):void{
 			
 				if(buttonBar != null){
@@ -1047,7 +1068,10 @@
 			// PrimaryBillToCity, PrimaryBillToCountry, PrimaryBillToPostalCode, PrimaryBillToProvince, PrimaryBillToState
 			private var mapAddressFields:Array = ["PrimaryBillToStreetAddress", "PrimaryBillToCity", "PrimaryBillToCountry", "PrimaryBillToPostalCode","MainPhone","MainFax"];
 			private function initForm():void {
+				hasSave =false;
 				var readOnlyFields:Object = new Object();
+				//bug#7306
+				listChild = new ArrayCollection();
 				//bug #1912
 				for each(var obj:Object in Database.fieldManagementServiceDao.readAll(entity)){
 					if(obj.Name && obj.ReadOnly == "true")
@@ -1181,7 +1205,8 @@
 									objectSQLQuery.sqlString = objectSQLQuery.sqlString.toString().replace(/''/, "");
 									objectSQLQuery.sqlString = objectSQLQuery.sqlString.toString().replace(/=/, "=''");
 								} 
-								displayObj = GUIUtils.getQueryGrid(objectSQLQuery, this, subtype, fields[i].readonly,showBarCode_clickHandler,isReadOnlyFields);								
+								displayObj = GUIUtils.getQueryGrid(objectSQLQuery, this, subtype, fields[i].readonly,showBarCode_clickHandler,isReadOnlyFields);
+								listChild.addItem(objectSQLQuery.entity);
 								sqlQueryObjects.addItem({'objectSQLQuery': objectSQLQuery, 'displayObj': displayObj});
 							}
 						} 
@@ -1224,7 +1249,8 @@
 							}
 							
 							objHeight = 185;
-							displayObj = GUIUtils.getRelationGrid(this, item, fields[i].custom, fields[i].readonly, refreshLinkList);					
+							displayObj = GUIUtils.getRelationGrid(this, item, fields[i].custom, fields[i].readonly, refreshLinkList);
+							listChild.addItem(relation.supportTable);
 						}
 						
 						else if(fields[i].column_name.indexOf("#")>-1){
@@ -1887,6 +1913,7 @@
 								//#1002 CRO
 								obj['mat_unit'] = Utils.getFormulaValue(entity,userOwner,obj,'mat_unit','mat_unit');
 								obj['mat_desc'] = Utils.getFormulaValue(entity,userOwner,obj,'mat_desc','mat_desc');
+								obj[BaseDAO.TEMP_COL]=true;
 								var dao:BaseDAO = Database.getDao(entity);
 								try {
 									dao.insert(obj);
