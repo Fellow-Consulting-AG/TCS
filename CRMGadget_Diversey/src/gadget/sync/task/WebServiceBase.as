@@ -604,6 +604,7 @@ package gadget.sync.task {
 			} catch (e:Error) {
 				_iscompress=false;
 				try {
+					e.getStackTrace()
 					Database.rollback();
 					Database.rollback();
 					Database.rollback();

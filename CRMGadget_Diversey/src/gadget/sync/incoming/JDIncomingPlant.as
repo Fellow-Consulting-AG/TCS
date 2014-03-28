@@ -23,16 +23,20 @@ package gadget.sync.incoming
 		{
 			super(entity);
 		}
-		
+		private function doNextPage(lastPage:Boolean):void{
+			searchProductSpec='';
+			i=0;
+			super.nextPage(lastPage);	
+		}
 		override protected function nextPage(lastPage:Boolean):void {
 			//incoming product
 			if(searchProductSpec!=''){
-				new JDIncomingProduct(searchProductSpec).start();
+				new JDIncomingServiceHistory(searchProductSpec,function():void{				
+				 doNextPage(lastPage);
+				},Database.productDao.entity).start();
+			}else{
+				doNextPage(lastPage);
 			}
-			searchProductSpec='';
-			i=0;
-			super.nextPage(lastPage);
-			
 			
 			
 		}

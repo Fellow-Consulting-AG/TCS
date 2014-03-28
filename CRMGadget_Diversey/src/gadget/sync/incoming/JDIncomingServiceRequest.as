@@ -4,11 +4,12 @@ package gadget.sync.incoming
 	import gadget.dao.Database;
 	import gadget.i18n.i18n;
 	import gadget.sync.WSProps;
+	import gadget.sync.incoming.JDIncomingServiceHistory;
 	import gadget.util.FieldUtils;
 	import gadget.util.ObjectUtils;
 	import gadget.util.ServerTime;
 	import gadget.util.StringUtils;
-	import gadget.sync.incoming.JDIncomingServiceHistory;
+	
 	import mx.collections.ArrayCollection;
 
 	public class JDIncomingServiceRequest extends JDIncomingPlant
@@ -23,27 +24,27 @@ package gadget.sync.incoming
 		
 		override protected function nextPage(lastPage:Boolean):void {
 			//incoming product
-			if(searchSpec!=''){
-				
+			if(searchSpec!=''){				
 				new JDIncomingServiceHistory(searchSpec,function():void{
 					new JDIncomingServiceHistory(searchSpec,function():void{
-						searchSpec='';
-						i=0;
-						super.nextPage(lastPage);
-					
+						doNextPage(lastPage);					
 					},Database.customObject2Dao.entity).start();
 				
 				},Database.customObject1Dao.entity).start();
 				
 			}else{
-				searchSpec='';
-				i=0;
-				super.nextPage(lastPage);	
+				doNextPage(lastPage);
 			}
 			
 			
 			
 			
+		}
+		
+		private function doNextPage(lastPage:Boolean):void{
+			searchSpec='';
+			i=0;
+			super.nextPage(lastPage);	
 		}
 		
 		override protected function postImportRecord(tmpOb:Object):void{
