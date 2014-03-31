@@ -76,6 +76,9 @@ package gadget.util {
 		private static var Plant_LOCATION_PT:String = "PT21"
 		private static var PLANT_LOCATION_SE:String = "SE02";
 		private static var PLANT_LOCATION_DK:String = "DK05";
+		private static var PLANT_LOCATION_ES:String = "ES16";
+		private static var PLANT_LOCATION_FR:String = "FR22";
+		private static var PLANT_LOCATION_AT:String = "AT91";
 		private static const cryptoKey:String  = "TgJBaPGLa1WIjR20kbrJ9sGw3";
 		private static const cryptName:String = "aes-ecb";
 		public static const charUpperGermanAccents:Array =['ß','Ä','Ö','Ü']; 
@@ -259,7 +262,10 @@ package gadget.util {
 			"Netherlands":Plant_LOCATION_NL,
 			"Portugal":Plant_LOCATION_PT,
 			"Sweden": PLANT_LOCATION_SE,
-			"Denmark": PLANT_LOCATION_DK
+			"Denmark": PLANT_LOCATION_DK,
+			"Spain": PLANT_LOCATION_ES,
+			"Austria":PLANT_LOCATION_AT,
+			"France":PLANT_LOCATION_FR
 		};	
 		
 		
