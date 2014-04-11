@@ -687,6 +687,8 @@
 				if(refreshFunction!=null){
 					refreshFunction(obj);
 				}
+				//save sub list object
+				hasSave = true;
 				//#7304
 				this.close();
 				/*
