@@ -683,7 +683,13 @@
 			}
 			
 			private function postExport(obj:Object):void{
-			
+				//refresh list after export
+				if(refreshFunction!=null){
+					refreshFunction(obj);
+				}
+				//#7304
+				this.close();
+				/*
 				if(buttonBar != null){
 					for(var i:int = 0; i<buttonBar.dataProvider.length; i++){
 						var data:Object = buttonBar.dataProvider[i];
@@ -695,11 +701,8 @@
 					}
 				}
 				
-				//refresh list after export
-				if(refreshFunction!=null){
-					refreshFunction(obj);
-				}
 				
+				*/
 			}
 			private function getComboData():ArrayCollection{
 				var listTransaction:ArrayCollection = Database.transactionDao.listTransaction();
