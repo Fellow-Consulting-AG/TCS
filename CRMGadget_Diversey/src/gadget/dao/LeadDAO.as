@@ -36,11 +36,15 @@ package gadget.dao
 		override public function get entity():String {
 			return "Lead";
 		}
+		override public function getOutgoingIgnoreFields():ArrayCollection{
+			//need to implement in subclass
+			return IGNORE_FIELDS;
+		}
 		
-		
-		private static const INGNORE_FIELDS:ArrayCollection=new ArrayCollection(
+		private static const IGNORE_FIELDS:ArrayCollection=new ArrayCollection(
 			[
 				"SalesPersonFullName",
+				"SalesPerson",
 				"LeadOwner",
 				"AccountExternalSystemId",
 				"AccountFuriganaName",

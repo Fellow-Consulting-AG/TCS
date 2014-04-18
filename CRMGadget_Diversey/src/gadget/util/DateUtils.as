@@ -64,7 +64,7 @@ package gadget.util {
 		
 		
 		private static const EUROPE:Array = ['0-1OBMR','0-1OBOZ','0-1OBMV','0-1OBNX','0-1OBMP','0-1OBMD','0-1OBMX'];
-		private static const AMERICAN:Array =['0-1OBMH','0-1OBLT','0-1OBN9','0-1OBLL','0-1OBMS','0-1OBOR','04-J4927','0-1OBND','0-1OBNV','0-1OBL5','0-1OBMZ'];
+		private static const AMERICAN:Array =['0-1OBMH','0-1OBLT','0-1OBM3','0-1OBN9','0-1OBLL','0-1OBMS','0-1OBOR','04-J4927','0-1OBND','0-1OBNV','0-1OBL5','0-1OBMZ'];
 		private static const AFFRIC:Array = ['0-1OBOX','0-1OBOD','0-1OBMJ'];
 //		private static const ASIA:Array = ['','','','','','','','','','','','','','','',''];
 //		private static const NO_DST:Array=['','','','','','','',''];
