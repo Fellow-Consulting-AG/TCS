@@ -44,7 +44,7 @@ package gadget.dao
 			
 			stmtSelectServiceNotComplete = new SQLStatement();
 			stmtSelectServiceNotComplete.sqlConnection = sqlConnection;
-			stmtSelectServiceNotComplete.text = "SELECT 'Service Request' gadget_type,* FROM "+tableName +" WHERE status = 'Open' OR local_update is not null";
+			stmtSelectServiceNotComplete.text = "SELECT 'Service Request' gadget_type,* FROM "+tableName +" WHERE status <> 'Closed' OR local_update is not null";
 			
 			
 			// Find all items updated locally

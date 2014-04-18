@@ -241,7 +241,7 @@ package gadget.util {
 				starthour =2;
 				endhour = 2;
 				endoccurrences = 1;
-				starthour = MAR;
+				startMonth = MAR;
 				endMonth = NOV;
 			}else if(EUROPE.indexOf(tzId)!=-1){
 				startoccurrences = 5;

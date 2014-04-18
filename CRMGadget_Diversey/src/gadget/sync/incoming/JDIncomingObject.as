@@ -46,13 +46,15 @@ package gadget.sync.incoming
 		override protected function isChangeOwner(localeRec:Object,serverRec:Object):Boolean{			
 			
 			
-			if(localeRec==null) return false;
-			
-			if(serverRec["Status"]=='Cancelled'){
-				return true;//delete canceled
+			var deleteLoc:Boolean = false;
+			//bug#7137
+			if(serverRec["Status"]=='Cancelled' ||serverRec["Status"]=='Closed' ){
+				deleteLoc = true;//delete canceled
+			} else if( localeRec["Owner"]!=serverRec["Owner"]){
+				deleteLoc= true;
 			}
 			
-			return localeRec["Owner"]!=serverRec["Owner"];
+			return deleteLoc;
 		}
 
 		
@@ -71,7 +73,7 @@ package gadget.sync.incoming
 			var oraId:String = DAOUtils.getOracleId(entityIDour);
 			var fId:String = WSProps.ws10to20(entityIDsod, oraId);
 			var i:int=0;
-			var owner:String = listChecks[0].Owner;
+			//var owner:String = listChecks[0].Owner;
 			for( ;currentIndx<listChecks.length;currentIndx++){
 				var rec:Object = listChecks.getItemAt(currentIndx);
 				if(i>0){
