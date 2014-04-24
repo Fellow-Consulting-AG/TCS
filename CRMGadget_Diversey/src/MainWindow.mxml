@@ -17,7 +17,7 @@
 	visible="false" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:layout="flexlib.scheduling.scheduleClasses.layout.*" xmlns:code="http://code.google.com/p/flexlib/"
 	close="OOPSwindow.bye();"
 	resizable="true"
-	minHeight ="640" 
+	minHeight ="600" 
 	minWidth="1020"
 	> 
 	<mx:Script>
