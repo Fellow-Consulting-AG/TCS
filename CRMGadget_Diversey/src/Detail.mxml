@@ -171,7 +171,9 @@
 					key.push("CustomPickList11");
 				}
 				if(status == "TC"){
+					item.CustomPickList10 = "ONST";
 					item.CustomPickList11 = "TECO";
+					key.push("CustomPickList10");
 					key.push("CustomPickList11");
 					
 					//#1118 CRO

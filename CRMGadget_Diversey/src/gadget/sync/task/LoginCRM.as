@@ -91,9 +91,9 @@ package gadget.sync.task
 				username = _preferences.tech_username;
 				password = _preferences.tech_password;
 			}
-			password = encodeURI(password);
+			
 			request.requestHeaders.push(new URLRequestHeader("Username", username));
-			request.requestHeaders.push(new URLRequestHeader("Password", password));
+			request.requestHeaders.push(new URLRequestHeader("Password", encodeURI(password)));
 			sessionId = null;
 			uri	= _preferences.sodhost;
 			startTime = now();				
