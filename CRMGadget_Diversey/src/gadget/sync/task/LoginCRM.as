@@ -78,7 +78,7 @@ package gadget.sync.task
 					loginCRMDataHandler(e,"Tech. ");
 				}
 			});
-			request.url=_preferences.sodhost + strForwardSlash + "Services/Integration?command=login";
+			request.url=_preferences.sodhost + strForwardSlash + "Services/Integration?command=login&isEncoded=Y";
 			if(Database.preferencesDao.getBooleanValue("use_sso")){
 				request.manageCookies=false;
 			}
@@ -91,6 +91,7 @@ package gadget.sync.task
 				username = _preferences.tech_username;
 				password = _preferences.tech_password;
 			}
+			password = encodeURI(password);
 			request.requestHeaders.push(new URLRequestHeader("Username", username));
 			request.requestHeaders.push(new URLRequestHeader("Password", password));
 			sessionId = null;
