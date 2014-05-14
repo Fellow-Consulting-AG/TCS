@@ -351,10 +351,11 @@ package gadget.sync.incoming {
 
 			_lastItems = _nbItems;
 			isLastPage=false;
-			if (pagenow==0 && haveLastPage==false && param.force==false && isUnboundedTask==false) {
-				isLastPage = true;
-				pagenow	= SUCCESSFULLY_FAIL_UNFORCED_PAGES;
-			}
+			//don't understand, why don't we start teh page from 0?
+//			if (pagenow==0 && haveLastPage==false && param.force==false && isUnboundedTask==false) {
+//				isLastPage = true;
+//				pagenow	= SUCCESSFULLY_FAIL_UNFORCED_PAGES;
+//			}
 			
 			trace("::::::: REQUEST20 ::::::::", getEntityName(), _page, pagenow, isLastPage, haveLastPage, searchSpec);
 			//CRO 15-06-2011 release table size
@@ -404,6 +405,10 @@ package gadget.sync.incoming {
 			return false;
 		}
 		
+		protected function isCanSave(obj:Object):Boolean{
+			return true;
+		}
+		
 		protected function importRecord(entitySod:String, data:XML, googleListUpdate:ArrayCollection=null):int {
 			var tmpOb:Object={};
 			
@@ -429,7 +434,7 @@ package gadget.sync.incoming {
 				_nbItems ++;
 				return 1;
 			}
-			if(this is JDIncomingObject){
+			if(!isCanSave(tmpOb)){
 				return 0;
 			}
 			

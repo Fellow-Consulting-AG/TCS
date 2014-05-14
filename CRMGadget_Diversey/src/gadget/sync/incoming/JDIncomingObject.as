@@ -12,6 +12,7 @@ package gadget.sync.incoming
 		
 		private var currentIndx:int=0;
 		private var listChecks:ArrayCollection;
+		private var canSaveRec:Boolean = false;
 		
 		public function JDIncomingObject(entity:String, records:ArrayCollection=null)
 		{
@@ -48,13 +49,30 @@ package gadget.sync.incoming
 			
 			var deleteLoc:Boolean = false;
 			//bug#7137
-			if(serverRec["Status"]=='Cancelled' ||serverRec["Status"]=='Closed' ){
+			if(serverRec["Status"]=='Cancelled'){
 				deleteLoc = true;//delete canceled
 			} else if( localeRec["Owner"]!=serverRec["Owner"]){
 				deleteLoc= true;
+			}else if(serverRec["Status"]=='Closed'){
+				if(serverRec["CustomPickList11"] != "TECO"){
+					deleteLoc=true;
+				}else{
+					//update record
+					canSaveRec = true;
+				}
 			}
 			
 			return deleteLoc;
+		}
+		
+		override protected function isCanSave(obj:Object):Boolean{
+			return canSaveRec;
+		}
+		
+		override protected function importRecord(entitySod:String, data:XML, googleListUpdate:ArrayCollection=null):int {
+			canSaveRec = false;
+			super.importRecord(entitySod,data,googleListUpdate);
+			return 0;
 		}
 
 		
