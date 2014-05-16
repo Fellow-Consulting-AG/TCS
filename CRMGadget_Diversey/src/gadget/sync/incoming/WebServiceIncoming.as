@@ -3,6 +3,7 @@ package gadget.sync.incoming {
 	import com.google.analytics.utils.UserAgent;
 	
 	import flash.events.IOErrorEvent;
+	import flash.utils.Dictionary;
 	
 	import gadget.dao.BaseDAO;
 	import gadget.dao.DAOUtils;
@@ -35,6 +36,8 @@ package gadget.sync.incoming {
 		protected const ROW_PLACEHOLDER:String = "___HERE__THE__ROW__NUMBER___";
 		protected const SUCCESSFULLY_FAIL_UNFORCED_PAGES:int = 3;
 		protected const MODIFIED_DATE:String = "ModifiedDate"; // ModifiedDate or ModifiedByDate
+		
+		protected var syncRecords:Dictionary = new Dictionary();
 
 		
 		protected var _page:int;
@@ -226,7 +229,7 @@ package gadget.sync.incoming {
 		}
 		
 		protected function doSplit():void {
-			_nbItems	= _lastItems;	//reset the counts.
+			//_nbItems	= _lastItems;	//reset the counts.
 			setFailed();				// failed success, do a split
 			successHandler(null);
 		}
@@ -350,12 +353,11 @@ package gadget.sync.incoming {
 			var pagenow:int = _page;
 
 			_lastItems = _nbItems;
-			isLastPage=false;
-			//don't understand, why don't we start teh page from 0?
-//			if (pagenow==0 && haveLastPage==false && param.force==false && isUnboundedTask==false) {
-//				isLastPage = true;
-//				pagenow	= SUCCESSFULLY_FAIL_UNFORCED_PAGES;
-//			}
+			isLastPage=false;			
+			if (pagenow==0 && haveLastPage==false && param.force==false && isUnboundedTask==false) {
+				isLastPage = true;
+				pagenow	= SUCCESSFULLY_FAIL_UNFORCED_PAGES;
+			}
 			
 			trace("::::::: REQUEST20 ::::::::", getEntityName(), _page, pagenow, isLastPage, haveLastPage, searchSpec);
 			//CRO 15-06-2011 release table size
@@ -572,7 +574,10 @@ package gadget.sync.incoming {
 				LocaleService.updateLanguageInfo(tmpOb);
 				Database.allUsersDao.setOwnerUser(tmpOb);
 			}
-			_nbItems ++;
+			if(!syncRecords.hasOwnProperty(info.rowid)){
+				_nbItems ++;
+				syncRecords[info.rowid]=info.rowid;
+			}
 			handleInlineData(data, tmpOb, info);
 			
 			return 1;
