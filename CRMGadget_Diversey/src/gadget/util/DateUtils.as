@@ -18,48 +18,49 @@ package gadget.util {
 		
 		private static const DATE_PATTERNS:Array =[ 
 			{locale: null, dateFormat: "MM/DD/YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("CHINESE_SINGAPORE"), dateFormat: "DD/M/YYYY", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("CHINESE_PRC"), dateFormat: "YYYY-M-DD", timeFormat: "KK:NN:SS A"},
-			{locale: i18n._("CHINESE_HONG_KONG_SAR"), dateFormat: "DD/M/YYYY", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("CHINESE_TAIWAN"), dateFormat: "YYYY/M/DD", timeFormat: "KK:NN:SS A"},
-			{locale: i18n._("CZECK_CZECK_REPUBLIC"), dateFormat: "DD.M.YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("DANISH_DENEMARK"), dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("DUTCH_BELGIUM"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("DUTCH_NETHERLANDS"), dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("ENGLISH_AUSTRALIA"), dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("ENGLISH_CANADA"), dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"},
-			{locale: i18n._("ENGLISH_INDIA"), dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("ENGLISH_IRLAND"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("ENGLISH_NEW_ZEALAND"), dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("ENGLISH_PHILIPPINES"), dateFormat: "M/DD/YYYY", timeFormat: "KK:NN:SS A"},
-			{locale: i18n._("ENGLISH_SOUTH_AFRICA"), dateFormat: "YYYY/MM/DD", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("ENGLISH_UNITED_KINGDOM"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("ENGLISH_UNITED_STATES"), dateFormat: "MM/DD/YYYY", timeFormat: "KK:NN:SS A"}, 
-			{locale: i18n._("FINNISH_FINLAND"), dateFormat: "DD.M.YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("FRENCH_BELGIUM"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("FRENCH_CANADA"), dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("FRENCH_FRANCE"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("FENCH_LUXEMBOURG"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("FRENCH_SWITZERLAND"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("GERMAN_AUSTRIA"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("GERMAN_GERMANY"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("GERMAN_LUXEMBOURG"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("GERMAN_SWITZERLAND"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("HUNGARIAN_HUNGARY"), dateFormat: "YYYY.MM.DD.", timeFormat: "J:NN:SS"},
-			{locale: i18n._("INDONESIAN_INDONESIA"), dateFormat: "DD/MM/YYYY", timeFormat: "J:NN:SS"}, 
-			{locale: i18n._("ITALIA_ITALY"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("JAPANESE_JAPAN"), dateFormat: "YYYY/MM/DD", timeFormat: "LL:NN:SS A"}, 
-			{locale: i18n._("KOREAN_KOREA"), dateFormat: "YYYY-MM-DD", timeFormat: "LL:NN:SS A"},
-			{locale: i18n._("MALAY_MALAYSIA"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("NORWEGIAN_BOKMAL"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("POLISH_POLAND"), dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("PORTUGUESE_BRASIL"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("PORTUGUESE_PORTUGAL"), dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("RUSSIAN_RUSSIA"), dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("SPANISH_MEXICO"), dateFormat: "DD/MM/YYYY", timeFormat: "LL:NN:SS A"}, 
-			{locale: i18n._("SPANISH_SPAIN_INTERNATIONAL_SORT"), dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
-			{locale: i18n._("SWEDISH_SWEDEN"), dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"}, 
-			{locale: i18n._("THAI_THAILAND"), dateFormat: "DD/M/YYYY", timeFormat: "J:NN:SS"}];
+			{locale: "0D-CCOZD", dateFormat: "DD/M/YYYY", timeFormat: "KK:NN:SS A"}, 
+			{locale: '0-118', dateFormat: "YYYY-M-DD", timeFormat: "KK:NN:SS A"},
+			{locale: "0D-CCOZE", dateFormat: "DD/M/YYYY", timeFormat: "KK:NN:SS A"}, 
+			{locale: "0-205", dateFormat: "YYYY/M/DD", timeFormat: "KK:NN:SS A"},
+			{locale: "0-202", dateFormat: "DD.M.YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-108", dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-BAA65", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-109", dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-BAA5D", dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"}, 
+			{locale: "0-BAA5G", dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"},
+			{locale: "0-208", dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA5I", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-206", dateFormat: "DD/MM/YYYY", timeFormat: "KK:NN:SS A"}, 
+			{locale:"0-204", dateFormat: "M/DD/YYYY", timeFormat: "KK:NN:SS A"},
+			{locale: "0-203", dateFormat: "YYYY/MM/DD", timeFormat: "KK:NN:SS A"}, 
+			{locale: "0-111", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-101", dateFormat: "MM/DD/YYYY", timeFormat: "KK:NN:SS A"}, 
+			{locale: "0-110", dateFormat: "DD.M.YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-112", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA5K", dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"},
+			{locale: "0-103", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA5P", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-BAA5R", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA5T", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-106", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA5Z", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
+			{locale:"0-BAA5V", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-201", dateFormat: "YYYY.MM.DD.", timeFormat: "J:NN:SS"},
+			{locale: "0-210", dateFormat: "DD/MM/YYYY", timeFormat: "J:NN:SS"}, 
+			{locale: "0-104", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-102", dateFormat: "YYYY/MM/DD", timeFormat: "LL:NN:SS A"}, 
+			{locale: "0-113", dateFormat: "YYYY-MM-DD", timeFormat: "LL:NN:SS A"},
+			{locale: "0-207", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-BAA63", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-212", dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-LCBRA", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-114", dateFormat: "DD-MM-YYYY", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-211", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-BAA61", dateFormat: "DD/MM/YYYY", timeFormat: "LL:NN:SS A"}, 
+			{locale: "0-116", dateFormat: "DD/MM/YYYY", timeFormat: "JJ:NN:SS"},
+			{locale: "0-107", dateFormat: "YYYY-MM-DD", timeFormat: "JJ:NN:SS"}, 
+			{locale: "0-209", dateFormat: "DD/M/YYYY", timeFormat: "J:NN:SS"},
+			{locale: "0-213", dateFormat: "DD.MM.YYYY", timeFormat: "JJ:NN:SS"}];
 		
 		
 		
@@ -330,10 +331,12 @@ package gadget.util {
 		*	return {local,dateFormat,timeFormat}  datePattern for the current user
 		*/
 		public static function getCurrentUserDatePattern():Object {
-			var languageInfo:Object = LocaleService.getLanguageInfo();
-			for each (var datePattern:Object in DATE_PATTERNS){
-				if(languageInfo.Locale == datePattern.locale){
-					return datePattern;
+			var languageInfo:Object = Database.allUsersDao.ownerUser();
+			if(languageInfo!=null){
+				for each (var datePattern:Object in DATE_PATTERNS){
+					if(languageInfo.LocaleCode == datePattern.locale){
+						return datePattern;
+					}
 				}
 			}
 			return DATE_PATTERNS[0];
