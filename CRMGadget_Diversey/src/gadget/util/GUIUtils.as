@@ -92,6 +92,9 @@ package gadget.util
 			var languageCode:String = Database.allUsersDao.ownerUser() == null ? null : Database.allUsersDao.ownerUser().LanguageCode;
 			if("PTG" == languageCode){
 				return list + " de " + objName;
+			}
+			else if("ESN" == languageCode){
+				return list + " de " + objName;
 			}else{
 				return objName + list;
 			}
