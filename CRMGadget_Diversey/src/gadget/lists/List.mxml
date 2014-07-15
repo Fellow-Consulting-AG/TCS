@@ -301,7 +301,7 @@
 						filterQuery = " important IS NOT NULL AND important > 0";
 						order_by = " important DESC";
 					}else if(filter && filter.type == Database.MISSING_PDF && filter.entity == Database.serviceDao.entity){
-						filterQuery = " Status != 'Closed' And (local_update is not null AND (deleted = 0 OR deleted IS null)) And (OwnerId = (select id from user))AND(CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and (filename like '%.pdf' or filename like '%.doc' or filename like '%.docx'))";
+						filterQuery = " Status != 'Closed' And (OwnerId = (select id from user))AND(CustomPickList10='SUSP' OR CustomPickList10='AWPT' OR CustomPickList11='TECO') And gadget_id Not In (Select gadget_id from attachment where entity='Service Request' And gadget_id is not null and (filename like '%.pdf' or filename like '%.doc' or filename like '%.docx'))";
 					}				
 					records = dao.findAll(columns, filterQuery, selectedId, imLimit,order_by);
 				} else {
