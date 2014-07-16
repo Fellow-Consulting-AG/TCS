@@ -1075,6 +1075,7 @@
 				list.name = entity;
 				list.mainwindow=this;
 				list.displayName = Database.customLayoutDao.getDisplayName(entity);
+				list.pluralName = Database.customLayoutDao.getPlural(entity);
 				list.icon = ImageUtils.getImage(entity);
 				list.setStyle("hideEffect", fadeOut);
 				list.setStyle("showEffect", fadeIn);
