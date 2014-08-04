@@ -103,7 +103,8 @@
 						//#1118 CRO
 						serviceRequest.Status = "Closed";
 						serviceRequest.local_update = new Date().getTime();
-						serviceRequest.CustomText4 = txtUserName.text;
+						//#7882 CRO
+						//serviceRequest.CustomText4 = txtUserName.text;
 						Database.getDao(Database.serviceDao.entity).update(serviceRequest);
 						
 						if(refreshDetail!=null){
@@ -122,7 +123,7 @@
 						service.Status = "Closed";
 						//Mony--should be set update as true
 						service.local_update = new Date().getTime();
-						service.CustomText4 = txtUserName.text;
+						//service.CustomText4 = txtUserName.text;
 						Database.getDao(Database.serviceDao.entity).update(service);
 					}
 					Database.commit();
