@@ -63,15 +63,16 @@ package gadget.sync.tests
 //				If you see the error SBL-EAI-04403 : set HasAccess to True in the table role_service_type for the current user and for the entity Account
 				Database.roleServiceRecordTypeAccessDao.upsert({HasAccess:"true"},entity);
 				updateHassAccessInCatch(true,entity);
-				successHandler(null);
-				return true;
+//				successHandler(null);
+//				return true;
 			}else if (mess.indexOf("SBL-EAI-04376")!=-1) {
 //				if you see the error SBL-EAI-04376 : set HasAccess to False in the table role_service_type for the current user and for the entity Account
 				Database.roleServiceRecordTypeAccessDao.upsert({HasAccess:"false"},entity);
 				updateHassAccessInCatch(false,entity);
-				successHandler(null);
-				return true;
-			}			
+//				successHandler(null);
+//				return true;
+			}	
+			successHandler(null);
 			return true;//bug#7147
 		}		
 		//Mony bug-#112

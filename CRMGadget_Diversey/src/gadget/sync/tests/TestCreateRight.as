@@ -64,15 +64,16 @@ package gadget.sync.tests
 				//cancreate
 				Database.roleServiceRecordTypeAccessDao.upsert({CanCreate:"true"},entity);
 				updateCanCreateInCatch(true,entity);
-				successHandler(null);
-				return true;
-			}else if (mess.indexOf("SBL-EAI-04421")!=-1) {
+				//successHandler(null);
+				//return true;
+			}else if (mess.indexOf("SBL-EAI-04421")!=-1 || mess.indexOf("SBL-DAT-00279")!=-1) {
 				//cannotcreate
 				Database.roleServiceRecordTypeAccessDao.upsert({CanCreate:"false"},entity);
 				updateCanCreateInCatch(false,entity);
-				successHandler(null);
-				return true;
+				//successHandler(null);
+				//return true;
 			}			
+			successHandler(null);
 			return true;//bug#7147
 		}
 		//Mony bug-#112
