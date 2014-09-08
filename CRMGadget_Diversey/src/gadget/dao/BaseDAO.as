@@ -313,6 +313,27 @@ package gadget.dao
 			exec(stmtDeletedByParentId);
 		}
 		
+		public function deleteOnlyRecordeNotErrorByParent(criteria:Object):void{
+			var where:String="";			
+			
+			var col:String="";			
+			var query:String = "DELETE FROM "+tableName ;
+			stmtDeletedByParentId = new SQLStatement();
+			stmtDeletedByParentId.sqlConnection = sqlConnection;
+			
+			for(col in criteria){
+				where+=" AND " + col +"= :"+col;
+				stmtDeletedByParentId.parameters[':'+col] = criteria[col];
+			}
+			where+=" AND (error = 0 OR error IS null) "
+			
+			where=where!="" ? " WHERE "+where.substr(5) : "";
+			
+			query = query + where;
+			stmtDeletedByParentId.text=query;
+			exec(stmtDeletedByParentId);
+		}
+		
 		public function getByParentId(criteria:Object):Array{
 			var where:String="";			
 			
@@ -707,6 +728,38 @@ package gadget.dao
 			}
 			return r.data[0];
 		}		
+		
+		// return list of oracle id	
+		public function findAllIds():ArrayCollection{
+			var oracleId:String = DAOUtils.getOracleId(entity);
+			var result:ArrayCollection = new ArrayCollection();
+			stmtFindAll.text = "SELECT "+oracleId + " FROM "+tableName;
+			exec(stmtFindAll);
+			var items:ArrayCollection = new ArrayCollection(stmtFindAll.getResult().data);
+			if(items.length>0){
+				for each(var o:Object in items){
+					var id:String = o[oracleId];
+					if(id!=null && id.indexOf("#")==-1){
+						result.addItem(id);	
+					}
+					
+				}
+				
+			}
+			return result;
+		}
+		
+		public function count():int{
+			stmtFindAll.text = "SELECT count(*) FROM " + tableName;
+			exec(stmtFindAll, false);
+			
+			var result:Array = stmtFindAll.getResult().data;
+			if(result!=null && result.length>0){
+				var obj:Object = result[0];
+				return obj['count(*)'] as int;
+			}
+			return 0;
+		}
 		
 		public function updateReference(columnName:String, previousValue:String, nextValue:String):void {
 			stmtUpdateRef.text = "UPDATE " + tableName + " SET " + columnName + " = '" + nextValue + "' WHERE " + columnName + " = '" + previousValue + "'";

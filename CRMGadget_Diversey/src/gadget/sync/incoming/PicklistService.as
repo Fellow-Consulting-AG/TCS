@@ -1,4 +1,5 @@
 package gadget.sync.incoming {
+	import flash.errors.SQLError;
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.filesystem.File;
@@ -154,9 +155,11 @@ package gadget.sync.incoming {
 							}catch(e:Error){
 								trace(e.message);
 							}
-							
+							try{
 							Database.picklistServiceDao.insert(data);
-							
+							}catch(e:SQLError){
+								trace(e.message);
+							}
 							
 							
 						}

@@ -5,18 +5,24 @@ package gadget.sync.incoming
 	import flash.events.IOErrorEvent;
 	import flash.utils.Dictionary;
 	
+	import flexunit.utils.ArrayList;
+	
+	import gadget.dao.DAOUtils;
 	import gadget.dao.Database;
 	import gadget.dao.IncomingSyncDAO;
 	import gadget.dao.SubobjectTable;
 	import gadget.dao.SupportDAO;
 	import gadget.dao.SupportRegistry;
+	import gadget.dao.TransactionDAO;
 	import gadget.sync.WSProps;
 	import gadget.sync.task.TaskParameterObject;
 	import gadget.util.DateUtils;
 	import gadget.util.ServerTime;
 	import gadget.util.SodUtils;
 	import gadget.util.StringUtils;
+	import gadget.util.Utils;
 	
+	import mx.charts.chartClasses.DataTip;
 	import mx.collections.ArrayCollection;
 
 	public class IncomingSubBase extends WebServiceIncoming
@@ -28,19 +34,28 @@ package gadget.sync.incoming
 		protected var subIDns:String;
 		protected var subList:String;
 		protected var subIDId:String;
-		protected var parentLastSynch:String = null;
+		protected var parentLastSynch:Date = null;
 		protected var pid:String = null;
 		protected var isUsedLastModified:Boolean = true;
 		protected const SUBROW_PLACEHOLDER:String = "___HERE__THE__SUBROW__NUMBER___";
-		protected var SUB_PAGE_SIZE:int;	
+		protected const PARENT_SEARCH_SPEC:String="parent_search_spec";
+		protected var SUB_PAGE_SIZE:int=25;	
+	//	protected var parentSearchSpec:String;
+		private var _currentMinIndex:int =0;
+		private var _currentMaxIndex:int = 50;
+		private var _listParents:ArrayCollection;
+		private var _parentRecord:int=0;
+		
 		public function IncomingSubBase(ID:String, subId:String, _dao:String=null) {
 			subIDour	= subId;
 			subIDsod	= SodUtils.transactionProperty(subId).sod_name;
 			if(ID == Database.opportunityDao.entity && subId == Database.productDao.entity){
 				subIDsod = subIDsod + "Revenue";
 				
-			}else if(ID == Database.contactDao.entity  && subId == "Related"){
+			}else if((ID == Database.contactDao.entity||ID == Database.accountDao.entity  )&& subId == "Related"){
 				subIDsod = subIDsod + ID;
+			}else if(ID == Database.contactDao.entity && "Custom Object 2" == subIDsod){
+				subIDsod = "CustomObject2";
 			}
 			
 			
@@ -64,7 +79,8 @@ package gadget.sync.incoming
 			
 			if(lastSyncObject!=null && lastSubSync!=null){
 				ServerTime.setSodTZ(DateUtils.getCurrentTimeZone(new Date())*3600,lastSyncObject.sync_date,Database.allUsersDao.ownerUser().TimeZoneName);
-				parentLastSynch = ServerTime.toSodIsoDate(ServerTime.parseSodDate(lastSyncObject.sync_date));
+				parentLastSynch = ServerTime.parseSodDate(lastSyncObject.sync_date);
+				
 			}
 			
 		}
@@ -97,7 +113,8 @@ package gadget.sync.incoming
 			// VAHI Don't ask.  It took me (more than) 4hrs to find QName .. Bullshit documentation
 			var qlist:QName=new QName(ns1.uri,listID), qent:QName=new QName(ns1.uri,entityIDns);
 
-			initXMLsub(baseXML, addFilters(entityIDour, entityIDsod, baseXML.child(qlist)[0].child(qent)[0]));
+			//initXMLsub(baseXML, addFilters(entityIDour, entityIDsod, baseXML.child(qlist)[0].child(qent)[0]));
+			initXMLsub(baseXML, baseXML.child(qlist)[0].child(qent)[0]);
 		}
 
 		protected function initXMLsub(baseXML:XML, subXML:XML):void {}
@@ -109,7 +126,9 @@ package gadget.sync.incoming
 		}
 
 		protected function nextSubPage(lastPage:Boolean, lastSubPage:Boolean):void {
-
+			if(!lastPage || !lastSubPage){
+				_currentMinIndex=Math.max(0,(_currentMinIndex-_parentRecord));
+			}
 			if (!lastSubPage) {
 				showCount();
 				_subpage++;		//VAHI yes, this might overcount
@@ -119,6 +138,31 @@ package gadget.sync.incoming
 			_subpage=0;
 			nextPage(lastPage);
 		}
+		
+		
+		protected override function nextPage(lastPage:Boolean):void {			
+				showCount();
+				if(lastPage){
+					if(_currentMaxIndex>=_listParents.length){						
+						super.nextPage(true);
+					}else{
+						_currentMinIndex = _currentMaxIndex;
+						_currentMaxIndex+=50;//incrase max
+						_subpage=0;
+						_page=0;
+						doRequest();
+					}
+				}else{
+					_currentMinIndex=Math.max(0,(_currentMinIndex-_parentRecord));
+					_subpage=0;
+					_page++;
+					doRequest();
+				}
+				
+			
+		}
+		
+		
 
 		override protected function handleZeroFault(soapAction:String, request:XML, event:IOErrorEvent):Boolean {
 			if (param.force || linearTask)
@@ -127,23 +171,70 @@ package gadget.sync.incoming
 			return true;
 		}
 
+		protected function doGetParents():ArrayCollection{
+			if(dao!=null){
+				return dao.findAllIds();
+			}
+			
+			return new ArrayCollection();
+		}
 		override protected function doRequest():void {
+			
+			
+			
 			var dateSpec:String = "";
 			var pagenow:int = _page;
 			var subpagenow:int = _subpage;
-			
+			var parentcriteria:String = "";
 			isLastPage = false;
 			
-			if( !param.full){				
-				if(parentLastSynch!=null && isUsedLastModified ){
-					dateSpec = "["+MODIFIED_DATE+"] &gt;= '"+parentLastSynch+"'";
+			if(_listParents==null){
+				_listParents = doGetParents();
+			}
+			
+			if(_currentMinIndex>=_listParents.length){
+				super.nextPage(true);
+				return;
+			}
+			
+			var startDate:Date = null;
+			if(startTime!=-1){
+				if(parentLastSynch!=null && parentLastSynch.getTime()>=startTime){
+					startDate = parentLastSynch;
+				}else{
+					startDate = new Date(startTime);
+				}
+			}else{
+				if(isUsedLastModified){
+					startDate = parentLastSynch;
+				}
+			}
+			
+			if( !param.full || startTime!=-1){			
+				if(startDate!=null){
+					dateSpec = "["+MODIFIED_DATE+"] &gt;= '"+ServerTime.toSodIsoDate(startDate)+"'"
 				}
 				
 			}
 			
+			
+			var filterSearch:String = super.getSearchFilterCriteria();
+			if(!StringUtils.isEmpty(filterSearch)){			
+				parentcriteria+=filterSearch;
+			}
+			
+			//parent ids cannot empty
+			if(parentcriteria!=''){
+				parentcriteria+=' AND ';
+			}
+			parentcriteria+=("("+generateSearchByParentId()+")");			
+			
 //			if (param.range) {
 //				dateSpec	= "( &gt;= '"+DateUtils.toSodDate(param.range.start)+"' ) AND ( &lt;= '"+DateUtils.toSodDate(param.range.end)+"' )";
 //			}
+			if(subIDsod == "CustomObject2"){
+				dateSpec = "";
+			}
 			trace("::::::: SUBREQUEST20 ::::::::",getEntityName(),param.force,_page,_subpage,pagenow,subpagenow,isLastPage,haveLastPage,dateSpec);
 //			Database.errorLoggingDao.add(null,{trace:[getEntityName(),param.force,_page,_subpage,pagenow,subpagenow,isLastPage,haveLastPage,dateSpec]});
 
@@ -151,20 +242,40 @@ package gadget.sync.incoming
 				getRequestXML().toXMLString()
 				.replace(ROW_PLACEHOLDER, pagenow*pageSize)
 				.replace(SUBROW_PLACEHOLDER, subpagenow*SUB_PAGE_SIZE)
-				.replace(SEARCHSPEC_PLACEHOLDER,dateSpec)
+				.replace(PARENT_SEARCH_SPEC,parentcriteria)
 				.replace(SEARCHSPEC_PLACEHOLDER,dateSpec)
 			));
 		}
-		protected function checkResponse(listObject:XML):void{
-			//implement in the sub class
+		
+		
+		protected  function generateSearchByParentId():String{
+			if(_currentMinIndex<_listParents.length){
+				var criteria:String="";
+				var maxIndex:int = Math.min(_currentMaxIndex,_listParents.length);
+				var first:Boolean = true;
+				_parentRecord=0;
+				for(_currentMinIndex;_currentMinIndex<maxIndex;_currentMinIndex++){
+					_parentRecord++;
+					if(!first){
+						criteria+=" OR ";
+					}
+					first = false;
+					criteria+=("[Id]=\'"+_listParents.getItemAt(_currentMinIndex)+"\'");
+				}
+				return criteria;
+			}
+			
+			return "";
 		}
+		
+		
 		override protected function handleResponse(request:XML, response:XML):int {
 			var listObject:XML = response.child(new QName(ns2.uri,listID))[0];
 			var lastPage:Boolean = listObject.attribute("lastpage")[0].toString() == 'true';
 			var lastSubPage:Boolean = true;
 			var qsublist:QName = new QName(ns2.uri,subList);
 			var cnt:int=0;
-			checkResponse(listObject); //Bug #7167 CRO
+			
 			Database.begin();
 			try{
 			for each (var parentRec:XML in listObject.child(new QName(ns2.uri,entityIDns))) {
@@ -189,7 +300,9 @@ package gadget.sync.incoming
 			return cnt;
 			
 		}
-
+		protected function checkResponse(listObject:XML):void{
+			//implement in the sub class
+		}
 		override public function getEntityName():String { return entityIDsod+subIDsod; }
 		override public function getTransactionName():String { return subIDour; }
 		override public function getParentTransactionName():String { return entityIDour; }

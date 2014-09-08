@@ -2089,6 +2089,21 @@ package gadget.util {
 			return byt;
 		}
 		
+		private static const MAP_OPERATION:Object = {
+			"!=":"&lt;>",
+			"<":"&lt;",
+			"is null":"IS NULL",
+			"is not null":"IS NOT NULL"
+		};
+		
+		public static function getOODOperation(localOperation:String):String{
+			var oodOperation:String = MAP_OPERATION[localOperation];
+			if(oodOperation==null){
+				return localOperation;
+			}
+			return oodOperation;
+		}
+		
 		
 	}
 }

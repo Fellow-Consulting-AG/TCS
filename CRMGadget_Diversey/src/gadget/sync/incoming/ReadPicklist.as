@@ -73,17 +73,17 @@ package gadget.sync.incoming
 			if (mess.indexOf("(SBL-ODS-50720)")>0
 				|| mess.indexOf("(SBL-ODS-50085)")>0
 				|| mess.indexOf("(SBL-SBL-00000)")>0
-				|| mess.indexOf("(SBL-ODS-50731)")>0 //field requested is not a valid picklist.
+				|| mess.indexOf("(SBL-ODS-50731)")>0 
+				|| mess.indexOf("(SBL-ODS-50735)")>0//field requested is not a valid picklist.
 				//|| (mess.indexOf("(SBL-SBL-00000)")>0 && allPicklists[currentPicklist].element_name=='Sub_Class') 
 			) {
-				trace("pick",allPicklists[currentPicklist].entity,"list",allPicklists[currentPicklist].element_name,"err:",errors.toXMLString());
-				currentPicklist++;
+				trace("pick",allPicklists[currentPicklist].entity,"list",allPicklists[currentPicklist].element_name,"err:",errors.toXMLString());				
 				_nbItems++;
-				nextPage(currentPicklist == allPicklists.length);
-				return true;
+				
 			}
-//			warn(_("ignoring picklist {2} for transaction {1}: {3}", allPicklists[currentPicklist].entity, allPicklists[currentPicklist].element_name, mess));
-			return false;
+			currentPicklist++;
+			nextPage(currentPicklist == allPicklists.length);
+			return true;
 		}
 
 		override protected function handleResponse(request:XML, result:XML):int {

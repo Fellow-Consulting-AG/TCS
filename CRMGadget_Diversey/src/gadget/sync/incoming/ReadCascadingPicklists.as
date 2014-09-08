@@ -109,9 +109,10 @@ package gadget.sync.incoming {
 							cascading["parent_value"] = parentValue;
 							cascading["child_value"] = relatedValue;
 							
-							Database.cascadingPicklistDAO.checkPicklistCode_(cascading);							
+											
 
 							try{
+								Database.cascadingPicklistDAO.checkPicklistCode_(cascading);			
 								Database.cascadingPicklistDAO.insert(cascading);
 							}catch(e:Error){
 								trace(e.getStackTrace());

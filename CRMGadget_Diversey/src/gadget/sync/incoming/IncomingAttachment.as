@@ -32,7 +32,7 @@ package gadget.sync.incoming
 					<{wsID} xmlns={ns1.uri}>
 						<ViewMode>{viewMode}</ViewMode>
 						<{listID} pagesize={pageSize} startrownum={ROW_PLACEHOLDER}>
-							<{entityIDns} >
+							<{entityIDns} searchspec={PARENT_SEARCH_SPEC} >
 								<ListOfAttachment pagesize={SUB_PAGE_SIZE} startrownum={SUBROW_PLACEHOLDER}>
 									<Attachment searchspec={SEARCHSPEC_PLACEHOLDER}>
 										<Id/>
@@ -90,9 +90,11 @@ package gadget.sync.incoming
 					
 					*/
 					obj.filename = data.ns2::DisplayFileName[0].toString();
-					if( StringUtils.getExtension(String(obj.filename)) == "" ) {
+					//Bug 5792 CRO
+					//remove checking extension  if filename has dot, it is not working ex: Test_12.2013
+					//if( StringUtils.getExtension(String(obj.filename)) == "" ) {
 						obj.filename = obj.filename + "." + data.ns2::FileExtension[0].toString();
-					}
+					//}
 					if(obj.filename == 'temp.tmp'){
 						return 0;
 					}

@@ -205,7 +205,7 @@ package gadget.sync.incoming {
 					xml.appendChild(new XML("<" + ws20name + "/>"));
 					//VAHI XXX TODO HACK87
 					// Do we need to add this to the SearchSpec instead?
-					applyFilters(xml, field.element_name, ws20name, criterials);
+					//applyFilters(xml, field.element_name, ws20name, criterials);
 				}
 			}
 			
@@ -306,9 +306,65 @@ package gadget.sync.incoming {
 				
 				searchSpec += "[Status]= \'Active\'";
 			}
+			
+			var searchFilter:String = getSearchFilterCriteria();
+			if(!StringUtils.isEmpty(searchFilter)){
+				
+				if(searchSpec!=''){
+					searchSpec+=' AND '
+				}
+				
+				searchSpec +=searchFilter;
+			}			
+			
+			
 			return searchSpec;
 			
 		}
+		
+		
+		protected function getSearchFilterCriteria():String{
+			var criterials:ArrayCollection = getFilterCriterials(entityIDour);
+			var searchSpec:String ="";
+			for each (var objCriterial:Object in criterials) {
+				//order by cannot send
+				if(objCriterial.num=="5"){
+					continue;
+				}
+				if (objCriterial.column_name!=null) {
+					var oodField:String = WSProps.ws10to20(entityIDour,objCriterial.column_name);
+					var operator:String =Utils.getOODOperation(objCriterial.operator);			
+					if(objCriterial.operator=='is null'||objCriterial.operator=='is not null'){
+						if(searchSpec !=''){
+							searchSpec+=' AND ';
+						}
+						searchSpec+="["+oodField+"] "+ operator;
+					}else{
+						var val:String= Utils.doEvaluateForFilter(objCriterial,entityIDour);
+						if(val != "<ERROR>"){
+							if(val=='') continue;
+							var childValue:String = "";
+							
+							if(operator.toLocaleUpperCase() == 'LIKE'){
+								childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg("*"+val+"*"));
+							}else if(operator.toLocaleUpperCase() == 'LIKE%'){
+								childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val+"*"));
+							}else{
+								childValue = operator + " " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val))
+							}					
+							if(searchSpec !=''){
+								searchSpec+=' AND ';
+							}
+							searchSpec+="["+oodField+"] "+ childValue;
+						}else{
+							isFormulaError=true;						
+						}
+					}
+				}
+			}
+			return searchSpec;
+		}
+		
 		
 		override protected function doRequest():void {
 			//Bug fixing 588 CRO
@@ -785,39 +841,39 @@ package gadget.sync.incoming {
 		// change it into a function returning the complete field, such that it can be added directly.
 		// Also looking up the field in the criterials this way is clumsy.
 		// Even that criterials only have very few fields.
-		protected function applyFilters(xml:XML, fieldInternal:String, fieldSod:String, criterials:ArrayCollection):void {
-			//VAHI generic variant of what was found in original Sync:
-			// apply some criterials (filter specs)
-			if (!withFilters)
-				return;
-			
-			// XXX TODO
-			// This should not go here, it should go into filterDao or transactionDao
-			for each (var objCriterial:Object in criterials) {
-			    //order by cannot send
-				if(objCriterial.num=="5"){
-					continue;
-				}
-				//Bug fixing 588 CRO
-				if (fieldInternal == objCriterial.column_name) {
-					var val:String= Utils.doEvaluateForFilter(objCriterial,entityIDour);
-					if(val != "<ERROR>"){
-						if(val=='') continue;
-						var childValue:String = objCriterial.operator + " " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val));
-						var operator:String =objCriterial.operator;
-						if(operator.toLocaleUpperCase() == 'LIKE'){
-							childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg("*"+val+"*"));
-						}else if(operator.toLocaleUpperCase() == 'LIKE%'){
-							childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val+"*"));
-						}
-						trace("filter",getEntityName(),"column",fieldSod,"with",childValue);
-						xml.elements(fieldSod).appendChild(childValue);
-					}else{
-						isFormulaError=true;						
-					}
-				}
-			}
-		}
+//		protected function applyFilters(xml:XML, fieldInternal:String, fieldSod:String, criterials:ArrayCollection):void {
+//			//VAHI generic variant of what was found in original Sync:
+//			// apply some criterials (filter specs)
+//			if (!withFilters)
+//				return;
+//			
+//			// XXX TODO
+//			// This should not go here, it should go into filterDao or transactionDao
+//			for each (var objCriterial:Object in criterials) {
+//			    //order by cannot send
+//				if(objCriterial.num=="5"){
+//					continue;
+//				}
+//				//Bug fixing 588 CRO
+//				if (fieldInternal == objCriterial.column_name) {
+//					var val:String= Utils.doEvaluateForFilter(objCriterial,entityIDour);
+//					if(val != "<ERROR>"){
+//						if(val=='') continue;
+//						var childValue:String = objCriterial.operator + " " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val));
+//						var operator:String =objCriterial.operator;
+//						if(operator.toLocaleUpperCase() == 'LIKE'){
+//							childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg("*"+val+"*"));
+//						}else if(operator.toLocaleUpperCase() == 'LIKE%'){
+//							childValue = "LIKE " + StringUtils.xmlEscape(StringUtils.sqlStrArg(val+"*"));
+//						}
+//						trace("filter",getEntityName(),"column",fieldSod,"with",childValue);
+//						xml.elements(fieldSod).appendChild(childValue);
+//					}else{
+//						isFormulaError=true;						
+//					}
+//				}
+//			}
+//		}
 		
 		protected function addFilters(entityOur:String, entitySod:String, xml:XML):XML {
 			if (!withFilters)
