@@ -48,6 +48,8 @@
 			public var fields:Array;
 			private var subtype:int = 0;
 			
+			protected var meterial2OldQuantity:Dictionary = new Dictionary();
+			
 			public var arrayDefaultObject:Array;
 			
 			[Bindable] public var create:Boolean;
@@ -81,16 +83,35 @@
 					if(isDelete){
 						Alert.show(i18n._('GLOBAL_ARE_YOU_SURE_YOU_WANT_TO_DELETE'),i18n._('GLOBAL_DELETE') , Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
 							if (event.detail==Alert.YES){
-								
-								//Database.begin();
-								for(var i:int=0;i<data.length;i++){
-									if(data[i].batchUpdate == true){
-										Database.getDao(entity).delete_(data[i]);
-										data.removeItemAt(i);
-										i--;
+								try{
+									Database.begin();
+									for(var i:int=0;i<data.length;i++){
+										if(data[i].batchUpdate == true){
+											
+											var fieldOracleId:String=DAOUtils.getOracleId(entity);
+											var valOraId:String=data[i][fieldOracleId];
+											if(valOraId.indexOf("#")==-1){
+												Database.getDao(entity).deleteTemporary(data[i]);
+											}else{
+												Database.getDao(entity).delete_(data[i]);
+											}			
+											
+											Utils.removeRelation(data[i],entity,false);															
+										
+											Database.customPicklistValueDAO.deleteByGadgetId(data[i]);
+											if(entity==Database.customObject2Dao.entity){
+												var sub :int = - parseInt(data[i].IndexedNumber0);
+												Database.customObject9Dao.updateCarStock(sub.toString(),data[i].ProductName);
+											}
+											data.removeItemAt(i);
+											i--;
+										}
 									}
+									Database.commit();
+								}catch(e:SQLError){
+									trace(e.toString());
+									Database.rollback();
 								}
-								//Database.commit();
 								refreshGrid();
 							}    	 
 						});	
@@ -183,6 +204,18 @@
 							}
 						}
 					});
+				}else{
+					if(items!=null && entity==Database.customObject2Dao.entity){
+						//ProductName,IndexedNumber0
+						for each(var co2:Object in items){
+							var newVal:int = parseInt(co2.IndexedNumber0);
+							if(meterial2OldQuantity.hasOwnProperty(co2.ProductName)){
+								meterial2OldQuantity[co2.ProductName] = meterial2OldQuantity[co2.ProductName]+newVal;
+							}else{
+								meterial2OldQuantity[co2.ProductName] = newVal;
+							}
+						}
+					}
 				}
 				setTitle();
 				initButtons();
@@ -386,35 +419,8 @@
 				
 			}
 			
-			private function doSave():Boolean {
+			private function saveToDatabase(newDataProvider:ArrayCollection):Boolean {
 				var hasError:Boolean = false;
-				var dp:ArrayCollection = editableGrid.dataProvider as ArrayCollection;
-				
-				//				//check the last index in the grid, if they don't input for "Material Number", "Quantity" and "Accounting Indicator" then we remove it
-				dp.filterFunction =  function(item:Object):Boolean {
-					if( StringUtils.isEmpty(item["IndexedNumber0"]) ||
-						(item["IndexedPick0"] == null || item["IndexedPick0"] == "")
-					){
-						return false;
-					}else{
-						return true;
-					}
-				};
-				dp.refresh();
-				
-				var newDataProvider:ArrayCollection = new ArrayCollection();
-				for each(var tmp:Object in dp){
-					var t:Object = new Object;
-					for(var p:String in tmp){
-						if(tmp[p] && tmp[p].hasOwnProperty("data")){
-							t[p] = tmp[p].data;
-						}else{
-							t[p] = tmp[p];
-						}
-					}
-					newDataProvider.addItem(t);
-				}
-				
 				for each(var item:Object in newDataProvider){
 					
 					item.gadget_type = entity;
@@ -459,6 +465,132 @@
 				
 				refreshGrid();
 				return hasError ? false : true;
+			}
+			
+			private function doSave():Boolean {
+				
+				var dp:ArrayCollection = editableGrid.dataProvider as ArrayCollection;
+				
+				//				//check the last index in the grid, if they don't input for "Material Number", "Quantity" and "Accounting Indicator" then we remove it
+				dp.filterFunction =  function(item:Object):Boolean {
+					if( StringUtils.isEmpty(item["IndexedNumber0"]) ||
+						(item["IndexedPick0"] == null || item["IndexedPick0"] == "")
+					){
+						return false;
+					}else{
+						return true;
+					}
+				};
+				dp.refresh();
+				
+				var newDataProvider:ArrayCollection = new ArrayCollection();
+				for each(var tmp:Object in dp){
+					var t:Object = new Object;
+					for(var p:String in tmp){
+						if(tmp[p] && tmp[p].hasOwnProperty("data")){
+							t[p] = tmp[p].data;
+						}else{
+							t[p] = tmp[p];
+						}
+					}
+					newDataProvider.addItem(t);
+				}
+				if(entity==Database.customObject2Dao.entity){
+					if(!checkCarStock(newDataProvider,create,meterial2OldQuantity)){
+						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
+							if (event.detail==Alert.YES){
+								if(saveToDatabase(newDataProvider)){
+									if(!create){
+										updateCardStock(meterial2OldQuantity,newDataProvider);
+										
+									}
+									close();
+								}
+							}
+						});
+						return false;
+					}else{
+						if(saveToDatabase(newDataProvider)){
+							if(!create){
+								updateCardStock(meterial2OldQuantity,newDataProvider);
+							}
+							return true;
+						}else{							
+							return false ;
+						}
+					}
+				}
+				return saveToDatabase(newDataProvider);
+			}
+			
+			protected function updateCardStock(oldValues:Dictionary,newRecordUpdate:ArrayCollection):void{
+				var newValues:Dictionary = new Dictionary();				
+				for each(var co2:Object in newRecordUpdate){
+					var newVal:int = parseInt(co2.IndexedNumber0);
+					if(newValues.hasOwnProperty(co2.ProductName)){
+						newValues[co2.ProductName] = newValues[co2.ProductName]+newVal;
+					}else{
+						newValues[co2.ProductName] = newVal;
+					}
+				}
+				for(var meterialNR:String in oldValues){
+					var old:int = oldValues[meterialNR];
+					if(newValues.hasOwnProperty(meterialNR)){
+						old = newValues[meterialNR]-old;
+						
+						delete newValues[meterialNR];
+						
+					}else{
+						//user change meterialnumber
+						old = -old;
+					}
+					Database.customObject9Dao.updateCarStock(old.toString(),meterialNR);
+					
+				}
+				for(var newMNR:String in newValues){
+					Database.customObject9Dao.updateCarStock(newValues[newMNR].toString(),newMNR);
+				}
+				
+				
+			}
+			
+			public static function checkCarStock(newRecord:ArrayCollection,isCreate:Boolean=true,meteria2OldQty:Dictionary=null):Boolean{
+				var meterial2NewQty:Dictionary = new Dictionary();
+				for each(var co2:Object in newRecord){
+					var newVal:int = parseInt(co2.IndexedNumber0);
+					if(meterial2NewQty.hasOwnProperty(co2.ProductName)){
+						meterial2NewQty[co2.ProductName] = meterial2NewQty[co2.ProductName]+newVal;
+					}else{
+						meterial2NewQty[co2.ProductName] = newVal;
+					}
+				}
+				for (var meterialNr:String in meterial2NewQty){
+					var co9:Object =Database.customObject9Dao.findByMeterialNumber(meterialNr);
+					if(co9==null){
+						return false;
+					}else{
+						
+						var newQty:int = meterial2NewQty[meterialNr];
+						if(!isCreate && meterialNr!=null){
+							if(meteria2OldQty.hasOwnProperty(meterialNr)){
+								var oldQty:int=meteria2OldQty[meterialNr];
+								if(oldQty>0){
+									newQty = newQty-oldQty;
+								}
+							}
+							
+						}
+						
+						if(newQty>parseInt(co9.CustomInteger2)){
+							return false;
+						}
+						
+					}
+					
+				}
+				
+				
+				return true;
 			}
 			
 			private function doEvaluate(item:Object, fieldName:String):void {

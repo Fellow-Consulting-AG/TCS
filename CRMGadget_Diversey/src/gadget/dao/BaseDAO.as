@@ -39,7 +39,7 @@ package gadget.dao
 		private var stmtSetErrorGid:SQLStatement;
 		private var stmtFindDuplicateByColumn:SQLStatement;
 		private var stmtUpdateRelationField:SQLStatement;
-		private var sqlConnection:SQLConnection;
+		protected var sqlConnection:SQLConnection;
 		private var stmtFindMSId:SQLStatement;
 		private var stmtIncreaseImportant:SQLStatement;
 		private var stmtUpdateFavorite:SQLStatement;

@@ -91,6 +91,9 @@ package gadget.sync
 					//add check owner change
 					addSeriaTask(JDIncomingChangeOwnerTasks(),TaskGroupBase);
 					
+					//get car stock from odd before update to ood(replace from ood if has any update)
+					addSeriaTask([new IncomingObject(Database.customObject9Dao.entity)],IncomingParallelTaskGroup);
+					
 					//Deleted items to google calendar
 					if(Database.preferencesDao.getValue("enable_google_calendar", 0) != 0)
 						_groups.addItem(new OutgoingGCalendarDelete());

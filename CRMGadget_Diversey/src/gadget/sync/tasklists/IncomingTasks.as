@@ -40,7 +40,7 @@ package gadget.sync.tasklists {
 			if(UserService.DIVERSEY==UserService.getCustomerId()){
 				if(obj.entity==Database.productDao.entity || obj.entity==Database.customObject3Dao.entity ||
 				   obj.entity==Database.serviceDao.entity || obj.entity==Database.customObject1Dao.entity ||
-				   obj.entity==Database.customObject2Dao.entity){
+				   obj.entity==Database.customObject2Dao.entity||obj.entity==Database.customObject9Dao.entity){
 					continue;
 				}
 				

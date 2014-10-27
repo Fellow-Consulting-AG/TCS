@@ -465,6 +465,10 @@ package gadget.util
 						Utils.deleteChild(selectedItem,objectSQLQuery.entity);						
 						selectedItem["gadget_type"] = objectSQLQuery.entity;
 						Database.customPicklistValueDAO.deleteByGadgetId(selectedItem);
+						if(objectSQLQuery.entity==Database.customObject2Dao.entity){
+							var sub :int = - parseInt(selectedItem.IndexedNumber0);
+							Database.customObject9Dao.updateCarStock(sub.toString(),selectedItem.ProductName);
+						}
 						refreshGrid(detail,grid,objectSQLQuery);
 //						grid.dataProvider = Database.queryDao.executeQuery(objectSQLQuery.sqlString);
 //						var data1:ArrayCollection = grid.dataProvider as ArrayCollection;

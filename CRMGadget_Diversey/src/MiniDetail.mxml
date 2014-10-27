@@ -34,6 +34,7 @@
 			import mx.controls.TextArea;
 			import mx.controls.TextInput;
 			import mx.core.IUIComponent;
+			import mx.events.CloseEvent;
 			import mx.validators.Validator;
 			
 			[Bindable] public var entity:String;
@@ -242,15 +243,13 @@
 				return false;
 			}
 			
-			private function update():Boolean {
-				
-				updateItemFields();
+			private function doUpdate():Boolean{
 				//only for JD user
 				GUIUtils.calculateTotalHours(item,entity);	
 				
 				// check validatio rule before save.
 				if(GUIUtils.checkValidationRule(item,entity,this)) return false;
-					
+				
 				// vm -- join field value
 				//CRO #833
 				//Utils.doFomulaField(entity,item,true);
@@ -279,7 +278,7 @@
 					item["OwnerId"] = Database.userDao.read().id;
 					var dao:BaseDAO = Database.getDao(entity);
 					try {
-						dao.insert(item);
+						dao.insert(item);						
 					} catch (e:SQLError) {
 						Alert.show(e.toString(), i18n._('MINIDETAIL_ALERT_TITLE_CANNOT_CREATE_RECORD'), Alert.CANCEL, this);
 						return false;
@@ -300,13 +299,79 @@
 					item.local_update = new Date().getTime();
 					Database.getDao(entity).update(item);
 					Utils.updateRelationFields(item,entity);
+					
 				}
+				
 				//CR #1911 CRO
 				Utils.updateFieldByChild(entity,item);
 				
 				if(refreshGrid!=null)
 					refreshGrid(item);
 				return true;
+			}
+		
+			
+			private function update():Boolean {
+				//ProductName---meterialnumber;IndexedNumber0--quantity
+				var oldQuantity:int = 0;
+				var oldMeterialNumber:String;
+				var sub:int =0;
+				if(!create && entity==Database.customObject2Dao.entity){
+					if(item.IndexedNumber0!=null && item.IndexedNumber0>0){
+						oldQuantity = parseInt(item.IndexedNumber0);
+						oldMeterialNumber = item.ProductName;
+					}
+				}
+				
+				updateItemFields();
+				
+				if(entity==Database.customObject2Dao.entity){
+					var meterialNumber:String = item.ProductName;
+					if(oldMeterialNumber==meterialNumber){
+						sub = parseInt(item.IndexedNumber0)-oldQuantity;
+					}else{
+						sub = parseInt(item.IndexedNumber0);
+					}
+					var carStock:Object = Database.customObject9Dao.findByMeterialNumber(meterialNumber);
+					if(carStock==null || sub>parseInt(carStock.CustomInteger2)){
+						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
+							if (event.detail==Alert.YES){
+								if(doUpdate()){
+									if(!create){
+										Database.customObject9Dao.updateCarStock(sub.toString(),item.ProductName);
+										if(item.ProductName!=oldMeterialNumber){
+											Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),item.ProductName);
+										}
+										
+									}
+									close();
+								}else{
+									item.IndexedNumber0=oldQuantity;//reset item when save not success
+								}
+							}
+						});
+						return false;
+					}else{
+						if(doUpdate()){
+							if(!create){
+								Database.customObject9Dao.updateCarStock(sub.toString(),item.ProductName);
+								if(item.ProductName!=oldMeterialNumber){
+									Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),item.ProductName);
+								}
+							}
+							return true;
+						}else{
+							item.IndexedNumber0=oldQuantity;//reset item when save not success
+							return false ;
+						}
+					}
+					
+					
+				}
+				
+				return doUpdate();
+				
+				
 			}
 			
 			private function createClick():void{

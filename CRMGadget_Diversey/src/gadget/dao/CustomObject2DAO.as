@@ -1,6 +1,8 @@
 package gadget.dao
 {
 	import flash.data.SQLConnection;
+	import flash.data.SQLResult;
+	import flash.data.SQLStatement;
 
 	public class CustomObject2DAO extends BaseDAO {
 
@@ -15,11 +17,31 @@ package gadget.dao
 				columns: { 'TEXT' : textColumns }
 			});
 		}
+		
+		
+		override public function updateTempField(temp:Boolean):void{
+			if(!temp){
+				//start update car stock
+				var stmtFindTemp:SQLStatement = new SQLStatement();
+				stmtFindTemp.sqlConnection = sqlConnection;
+				stmtFindTemp.text = "SELECT ProductName,IndexedNumber0 from custom_object_2 WHERE "+TEMP_COL+"=true";				
+				exec(stmtFindTemp);
+				var result:SQLResult = stmtFindTemp.getResult();
+				if(result!=null){
+					for each(var co2:Object in result.data){//bug#8135--reduced car stock
+						Database.customObject9Dao.updateCarStock(co2.IndexedNumber0,co2.ProductName);
+					}
+				}
+			}
+			
+			super.updateTempField(temp);
+			
+			
+		}
 
 		override public function get entity():String {
 			return "Custom Object 2";
-		}
-		
+		}		
 		private var textColumns:Array = [
 			"AccountExternalSystemId",
 			"AccountId",

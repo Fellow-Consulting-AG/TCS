@@ -2,9 +2,13 @@
 package gadget.dao
 {
 	import flash.data.SQLConnection;
+	import flash.data.SQLResult;
+	import flash.data.SQLStatement;
 
 	public class CustomObject9DAO extends BaseDAO {
 
+		protected var stmtUpdateQuantity:SQLStatement;
+		protected var stmtFindByMeterialNR:SQLStatement;
 		public function CustomObject9DAO(sqlConnection:SQLConnection, work:Function) {
 			super(work, sqlConnection, {
 				table: 'sod_customobject9',
@@ -12,13 +16,38 @@ package gadget.dao
 				name_column: [ 'Name' ],
 				search_columns: [ 'Name' ],
 				display_name : "CustomObject9",	//___EDIT__THIS___
-				index: [ 'Id' ],
+				index: [ 'Id','OptimizedCustomTextSM0' ],//OptimizedCustomTextSM0 is meterial number
 				columns: { 'TEXT' : textColumns }
 			});
+			stmtUpdateQuantity = new SQLStatement();
+			stmtUpdateQuantity.sqlConnection = sqlConnection;
+			stmtUpdateQuantity.text = "update sod_customobject9 set CustomInteger2=CustomInteger2-:sub,local_update=:updateDate where OptimizedCustomTextSM0=:meterialNR";
+			
+			stmtFindByMeterialNR = new SQLStatement();
+			stmtFindByMeterialNR.sqlConnection = sqlConnection;
+			stmtFindByMeterialNR.text = "SELECT '" + entity + "' gadget_type, gadget_id,Id,OptimizedCustomTextSM0,CustomInteger2 FROM sod_customobject9 WHERE OptimizedCustomTextSM0=:meterialNR";
 		}
 
 		override public function get entity():String {
 			return "CustomObject9";
+		}
+		
+		
+		public function updateCarStock(sub:String,meterialNr:String):void{
+			stmtUpdateQuantity.parameters[":sub"]=sub;
+			stmtUpdateQuantity.parameters[":meterialNR"]=meterialNr;
+			stmtUpdateQuantity.parameters[":updateDate"]=new Date().getTime();
+			exec(stmtUpdateQuantity);
+		}
+		
+		public function findByMeterialNumber(meterialNr:String):Object{
+			stmtFindByMeterialNR.parameters[":meterialNR"]=meterialNr;
+			exec(stmtFindByMeterialNR);
+			var r:SQLResult = stmtFindByMeterialNR.getResult();
+			if(r.data==null || r.data.length==0){
+				return null;
+			}
+			return r.data[0];
 		}
 		
 		private var textColumns:Array = [
@@ -653,6 +682,7 @@ package gadget.dao
 			"OpportunityName",
 			"OpportunityOwner",
 			"OpportunityRevenue",
+			"OptimizedCustomTextSM0",
 			"OwnerAlias",
 			"OwnerEMailAddr",
 			"OwnerExternalSystemId",

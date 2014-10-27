@@ -17,6 +17,8 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import flexunit.utils.ArrayList;
+			
 			import gadget.chatclient.CRMXAMPPConnection;
 			import gadget.control.AutoComplete;
 			import gadget.control.AutoCompleteAddress;
@@ -667,18 +669,24 @@
 			}
 			
 			override public function close():void{
-				if(hasSave){
-					//delete add new
-					for each(var subEntity:String in listChild){
-						
-						Database.getDao(subEntity).updateTempField(false);
+				Database.begin();
+				try{
+					if(hasSave){
+						//delete add new
+						for each(var subEntity:String in listChild){
+							
+							Database.getDao(subEntity).updateTempField(false);
+						}
+					}else{
+						//delete add new
+						for each(var cancelEntity:String in listChild){
+							
+							Database.getDao(cancelEntity).deleteTempRecordByParentId({});//delete all temp record
+						}
 					}
-				}else{
-					//delete add new
-					for each(var cancelEntity:String in listChild){
-						
-						Database.getDao(cancelEntity).deleteTempRecordByParentId({});//delete all temp record
-					}
+					Database.commit();
+				}catch(e:SQLError){
+					Database.rollback();
 				}
 				
 				super.close();				
@@ -1878,8 +1886,47 @@
 				this.enabled = true;
 			}
 			
-			public function getProductList(codeList:Array,entity:String,readBarcode:Boolean=false):void {
+			protected function doSaveCO2(listCo2:ArrayCollection,entity:String):void{
+				Database.begin();
+				try{
+					for each(var co2:Object in listCo2){
+						var dao:BaseDAO = Database.getDao(entity);
+						try {
+							dao.insert(co2);
+						} catch (e:SQLError) {
+							Alert.show(e.toString(), i18n._('MINIDETAIL_ALERT_TITLE_CANNOT_CREATE_RECORD'), Alert.CANCEL, this);
+							return;
+						}
+						co2 = dao.selectLastRecord()[0];
+						// by default, sets the OracleId as gadget_id
+						co2[DAOUtils.getOracleId(entity)] = "#" + co2.gadget_id;
+						Database.getDao(entity).update(co2);
+					}
+					Database.commit();
+				}catch(e:SQLError){
+					Database.rollback();
+				}
+				// refresh data grid.
+				//grid.dataProvider = Database.queryDao.executeQuery(objectSQLQuery.sqlString);
+				innerListUpdate();
+				//(grid.dataProvider as ArrayCollection).refresh(); break;
+				for each(var sqlQueryObjectR:Object in sqlQueryObjects) {
+					var objectSQLQueryR:Object = sqlQueryObjectR.objectSQLQuery;
+					var displayObjR:DisplayObject = sqlQueryObjectR.displayObj;
+					if(displayObjR is VBox && objectSQLQueryR.entity==entity) {
+						var gridR:DataGrid = ((displayObjR as VBox).getChildAt(0)) as DataGrid;
+						gridR.dataProvider = Database.queryDao.executeQuery(objectSQLQueryR.sqlString);
+						//CRO picklist display Code to Value
+						var data:ArrayCollection = gridR.dataProvider as ArrayCollection;
+						GUIUtils.mapPickListValueSqlGrid(data,sqlQueryObjectR.objectSQLQuery);
+						//--------------------
+						(gridR.dataProvider as ArrayCollection).refresh();
+					}
+				}	
+			}
 			
+			public function getProductList(codeList:Array,entity:String,readBarcode:Boolean=false):void {
+			    var listC02:ArrayCollection = new ArrayCollection();
 				for each(var sqlQueryObject:Object in sqlQueryObjects) {
 					var objectSQLQuery:Object = sqlQueryObject.objectSQLQuery;
 					var displayObj:DisplayObject = sqlQueryObject.displayObj;
@@ -1921,40 +1968,31 @@
 								obj['mat_unit'] = Utils.getFormulaValue(entity,userOwner,obj,'mat_unit','mat_unit');
 								obj['mat_desc'] = Utils.getFormulaValue(entity,userOwner,obj,'mat_desc','mat_desc');
 								obj[BaseDAO.TEMP_COL]=true;
-								var dao:BaseDAO = Database.getDao(entity);
-								try {
-									dao.insert(obj);
-								} catch (e:SQLError) {
-									Alert.show(e.toString(), i18n._('MINIDETAIL_ALERT_TITLE_CANNOT_CREATE_RECORD'), Alert.CANCEL, this);
-									return;
-								}
-								obj = dao.selectLastRecord()[0];
-								// by default, sets the OracleId as gadget_id
-								obj[DAOUtils.getOracleId(entity)] = "#" + obj.gadget_id;
-								Database.getDao(entity).update(obj);
+								listC02.addItem(obj);
+								
 							}								
-							trace(codeList[idx]);
-						}									
-						// refresh data grid.
-						//grid.dataProvider = Database.queryDao.executeQuery(objectSQLQuery.sqlString);
-						innerListUpdate();break;
-						//(grid.dataProvider as ArrayCollection).refresh(); break;
+							
+						}		
+						break;
+						
 					}
 				}
-				
-				for each(var sqlQueryObjectR:Object in sqlQueryObjects) {
-					var objectSQLQueryR:Object = sqlQueryObjectR.objectSQLQuery;
-					var displayObjR:DisplayObject = sqlQueryObjectR.displayObj;
-					if(displayObjR is VBox && objectSQLQueryR.entity==entity) {
-						var gridR:DataGrid = ((displayObjR as VBox).getChildAt(0)) as DataGrid;
-						gridR.dataProvider = Database.queryDao.executeQuery(objectSQLQueryR.sqlString);
-						//CRO picklist display Code to Value
-						var data:ArrayCollection = gridR.dataProvider as ArrayCollection;
-						GUIUtils.mapPickListValueSqlGrid(data,sqlQueryObjectR.objectSQLQuery);
-						//--------------------
-						(gridR.dataProvider as ArrayCollection).refresh();
+				if(entity==Database.customObject2Dao.entity){
+					if(MaterialUsedListWindow.checkCarStock(listC02)){
+						doSaveCO2(listC02,entity);
+					}else{
+						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
+							if (event.detail==Alert.YES){
+								doSaveCO2(listC02,entity);
+							}
+						});
 					}
-				}	
+				}else{
+				
+					doSaveCO2(listC02,entity);
+				
+				}
+				
 			}
 
 			protected function facebookBtn_clickHandler(event:MouseEvent):void
