@@ -51,6 +51,9 @@
 			private var inputFields:ArrayCollection = null;
 			[Bindable] private var disable:Boolean;
 			
+			protected var oldQuantity:int = 0;
+			protected var oldMeterialNumber:String;
+			
 			private function init():void {
 				item.gadget_type = entity;
 				title = titlebar.title = Utils.getTitle(entity, subtype, item, create);
@@ -71,6 +74,13 @@
 					createNewBtn.width = 0;
 				}
 				initForm();
+				//set oldValue
+				if(!create && entity==Database.customObject2Dao.entity){
+					if(item.IndexedNumber0!=null && item.IndexedNumber0>0){
+						oldQuantity = parseInt(item.IndexedNumber0);
+						oldMeterialNumber = item.ProductName;
+					}
+				}
 				if(detail != null){
 					createBtn.enabled =  !detail.isDisableBtnUpdate;
 				}
@@ -168,6 +178,7 @@
 				for each (var inputFieldObj:Object in inputFields){
 					GUIUtils.setupCascadingCombo(inputFieldObj.component, inputFieldObj.formField, inputFields);
 				}
+				
 
 			}
 
@@ -313,15 +324,9 @@
 			
 			private function update():Boolean {
 				//ProductName---meterialnumber;IndexedNumber0--quantity
-				var oldQuantity:int = 0;
-				var oldMeterialNumber:String;
+				
 				var sub:int =0;
-				if(!create && entity==Database.customObject2Dao.entity){
-					if(item.IndexedNumber0!=null && item.IndexedNumber0>0){
-						oldQuantity = parseInt(item.IndexedNumber0);
-						oldMeterialNumber = item.ProductName;
-					}
-				}
+				
 				
 				updateItemFields();
 				
@@ -337,10 +342,11 @@
 						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
 							if (event.detail==Alert.YES){
 								if(doUpdate()){
-									if(!create){
+									if(!create && !item[BaseDAO.TEMP_COL]){
+										
 										Database.customObject9Dao.updateCarStock(sub.toString(),item.ProductName);
 										if(item.ProductName!=oldMeterialNumber){
-											Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),item.ProductName);
+											Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),oldMeterialNumber);
 										}
 										
 									}
@@ -353,10 +359,10 @@
 						return false;
 					}else{
 						if(doUpdate()){
-							if(!create){
+							if(!create && !item[BaseDAO.TEMP_COL]){
 								Database.customObject9Dao.updateCarStock(sub.toString(),item.ProductName);
 								if(item.ProductName!=oldMeterialNumber){
-									Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),item.ProductName);
+									Database.customObject9Dao.updateCarStock((-oldQuantity).toString(),oldMeterialNumber);
 								}
 							}
 							return true;

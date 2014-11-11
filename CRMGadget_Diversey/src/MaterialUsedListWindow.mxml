@@ -208,11 +208,13 @@
 					if(items!=null && entity==Database.customObject2Dao.entity){
 						//ProductName,IndexedNumber0
 						for each(var co2:Object in items){
-							var newVal:int = parseInt(co2.IndexedNumber0);
-							if(meterial2OldQuantity.hasOwnProperty(co2.ProductName)){
-								meterial2OldQuantity[co2.ProductName] = meterial2OldQuantity[co2.ProductName]+newVal;
-							}else{
-								meterial2OldQuantity[co2.ProductName] = newVal;
+							if(!co2[BaseDAO.TEMP_COL]){
+								var newVal:int = parseInt(co2.IndexedNumber0);
+								if(meterial2OldQuantity.hasOwnProperty(co2.ProductName)){
+									meterial2OldQuantity[co2.ProductName] = meterial2OldQuantity[co2.ProductName]+newVal;
+								}else{
+									meterial2OldQuantity[co2.ProductName] = newVal;
+								}
 							}
 						}
 					}
