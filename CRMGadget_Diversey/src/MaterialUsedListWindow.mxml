@@ -583,7 +583,7 @@
 							
 						}
 						
-						if(newQty>parseInt(co9.CustomInteger2)){
+						if(newQty>parseInt(co9.CustomInteger0)){
 							return false;
 						}
 						

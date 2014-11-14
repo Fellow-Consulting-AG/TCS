@@ -16,16 +16,16 @@ package gadget.dao
 				name_column: [ 'Name' ],
 				search_columns: [ 'Name' ],
 				display_name : "CustomObject9",	//___EDIT__THIS___
-				index: [ 'Id','OptimizedCustomTextSM0' ],//OptimizedCustomTextSM0 is meterial number
+				index: [ 'Id','CustomText36' ],//OptimizedCustomTextSM0 is meterial number
 				columns: { 'TEXT' : textColumns }
 			});
 			stmtUpdateQuantity = new SQLStatement();
 			stmtUpdateQuantity.sqlConnection = sqlConnection;
-			stmtUpdateQuantity.text = "update sod_customobject9 set CustomInteger2=CustomInteger2-:sub,local_update=:updateDate where OptimizedCustomTextSM0=:meterialNR";
+			stmtUpdateQuantity.text = "update sod_customobject9 set CustomInteger0=CustomInteger0-:sub,local_update=:updateDate where CustomText36=:meterialNR";
 			
 			stmtFindByMeterialNR = new SQLStatement();
 			stmtFindByMeterialNR.sqlConnection = sqlConnection;
-			stmtFindByMeterialNR.text = "SELECT '" + entity + "' gadget_type, gadget_id,Id,OptimizedCustomTextSM0,CustomInteger2 FROM sod_customobject9 WHERE OptimizedCustomTextSM0=:meterialNR";
+			stmtFindByMeterialNR.text = "SELECT '" + entity + "' gadget_type, gadget_id,Id,CustomText36,CustomInteger0 FROM sod_customobject9 WHERE CustomText36=:meterialNR";
 		}
 
 		override public function get entity():String {

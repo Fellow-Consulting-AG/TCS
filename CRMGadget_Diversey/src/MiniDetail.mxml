@@ -338,7 +338,7 @@
 						sub = parseInt(item.IndexedNumber0);
 					}
 					var carStock:Object = Database.customObject9Dao.findByMeterialNumber(meterialNumber);
-					if(carStock==null || sub>parseInt(carStock.CustomInteger2)){
+					if(carStock==null || sub>parseInt(carStock.CustomInteger0)){
 						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
 							if (event.detail==Alert.YES){
 								if(doUpdate()){
