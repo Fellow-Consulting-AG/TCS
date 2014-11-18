@@ -10,6 +10,7 @@ package gadget.sync.outgoing
 	
 	import gadget.dao.AttachmentDAO;
 	import gadget.dao.BaseDAO;
+	import gadget.dao.CustomObject2DAO;
 	import gadget.dao.DAO;
 	import gadget.dao.DAOUtils;
 	import gadget.dao.Database;
@@ -210,7 +211,10 @@ package gadget.sync.outgoing
 //									if (field.element_name == 'SalesPersonFullName' || field.element_name == 'LeadOwner') continue;
 //									break;
 //							}
-							
+							//#8135 CRO
+							if(oper == "update" && dao.getOutgoingIgnoreFields().contains(field.element_name) && entity == "Custom Object 2"){
+								continue;
+							}
 							if(dao.getOutgoingIgnoreFields().contains(field.element_name)){
 								continue;
 							}

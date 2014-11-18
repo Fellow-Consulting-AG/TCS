@@ -3,6 +3,8 @@ package gadget.dao
 	import flash.data.SQLConnection;
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
+	
+	import mx.collections.ArrayCollection;
 
 	public class CustomObject2DAO extends BaseDAO {
 
@@ -38,7 +40,10 @@ package gadget.dao
 			
 			
 		}
-
+		//#8135 CRO
+		override public function getOutgoingIgnoreFields():ArrayCollection{
+			return new ArrayCollection(["ProductExternalSystemId","ProductIntegrationId"]);
+		}
 		override public function get entity():String {
 			return "Custom Object 2";
 		}		
