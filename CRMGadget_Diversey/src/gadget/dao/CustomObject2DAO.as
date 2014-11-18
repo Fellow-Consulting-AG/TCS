@@ -42,7 +42,56 @@ package gadget.dao
 		}
 		//#8135 CRO
 		override public function getOutgoingIgnoreFields():ArrayCollection{
-			return new ArrayCollection(["ProductExternalSystemId","ProductIntegrationId"]);
+			return new ArrayCollection([
+			"AccountName",
+			"AccountLocation",
+			"AccountExternalSystemId",
+			"AccountIntegrationId",
+			"ActivityExternalSystemId",
+			"ActivityIntegrationId",
+			"CampaignName",
+			"CampaignExternalSystemId",
+			"CampaignIntegrationId",
+			"ContactFullName",
+			"ContactFirstName",
+			"ContactLastName",
+			"ContactIntegrationId",
+			"ContactExternalSystemId",
+			"CreatedBy",
+			"CreatedDate",
+			"DealerName",
+			"DealerExternalSystemId",
+			"DealerIntegrationId",
+			"HouseholdName",
+			"HouseholdExternalSystemId",
+			"HouseholdIntegrationId",
+			"LeadFullName",
+			"LeadFirstName",
+			"LeadLastName",
+			"LeadExternalSystemId",
+			"LeadIntegrationId","OpportunityExternalSystemId",
+			"OpportunityName",
+			"OpportunityIntegrationId",
+			"Owner",
+			"OwnerExternalSystemId",
+			"CustomObject3Name",
+			"CustomObject3ExternalSystemId",
+			"CustomObject3IntegrationId",
+			"ModifiedDate",
+			"PortfolioExternalSystemId",
+			"PortfolioAccountNumber",
+			"PortfolioExternalSystemId",
+			"PortfolioIntegrationId",
+			"ServiceRequestNumber",
+			"ServiceRequestExternalSystemId",
+			"ServiceRequestIntegrationId",
+			"VehicleExternalSystemId",
+			"VehicleIntegrationId",
+			"CustomObject1Name",
+			"CustomObject1ExternalSystemId",
+			"CustomObject1IntegrationId"			
+			
+			]);
 		}
 		override public function get entity():String {
 			return "Custom Object 2";

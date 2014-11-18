@@ -211,10 +211,7 @@ package gadget.sync.outgoing
 //									if (field.element_name == 'SalesPersonFullName' || field.element_name == 'LeadOwner') continue;
 //									break;
 //							}
-							//#8135 CRO
-							if(oper == "update" && dao.getOutgoingIgnoreFields().contains(field.element_name) && entity == "Custom Object 2"){
-								continue;
-							}
+							//#8135 CRO							
 							if(dao.getOutgoingIgnoreFields().contains(field.element_name)){
 								continue;
 							}
