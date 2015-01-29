@@ -4,6 +4,8 @@ package gadget.dao
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
 	
+	import gadget.util.StringUtils;
+	
 	import mx.collections.ArrayCollection;
 
 	public class CustomObject2DAO extends BaseDAO {
@@ -40,6 +42,25 @@ package gadget.dao
 			
 			
 		}
+		
+		public function getInUse(mr:String):Object{
+			
+			if(!StringUtils.isEmpty(mr)){
+				//start update car stock
+				var stmtFindTemp:SQLStatement = new SQLStatement();
+				stmtFindTemp.sqlConnection = sqlConnection;
+				stmtFindTemp.text = "select ProductName,is_temp, sum(IndexedNumber0) IndexedNumber0  from custom_object_2 where ProductName='"+mr+"' AND is_temp=1 group by ProductName";				
+				exec(stmtFindTemp);
+				var result:Array = stmtFindTemp.getResult().data;
+				if(result!=null && result.length>0){
+					return result[0];
+				}
+			}
+			
+			return null;
+		}
+		
+		
 		//#8135 CRO
 		override public function getOutgoingIgnoreFields():ArrayCollection{
 			return new ArrayCollection([

@@ -1381,7 +1381,7 @@ package gadget.dao {
 			
 			// custom layouts set default background
 			database.XupdateBackgroundColor(database._sqlConnection);
-			
+			customObject2Dao.deleteTempRecordByParentId({});//delete all temp recorde
 			_work = null;	//VAHI make sure we do not accidentally use it later
 			
 			LocaleService.reset();

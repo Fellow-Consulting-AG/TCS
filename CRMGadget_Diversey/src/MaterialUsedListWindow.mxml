@@ -49,6 +49,7 @@
 			private var subtype:int = 0;
 			
 			protected var meterial2OldQuantity:Dictionary = new Dictionary();
+			protected var meterial2InuseQuantity:Dictionary = new Dictionary();
 			
 			public var arrayDefaultObject:Array;
 			
@@ -100,8 +101,10 @@
 										
 											Database.customPicklistValueDAO.deleteByGadgetId(data[i]);
 											if(entity==Database.customObject2Dao.entity){
-												var sub :int = - parseInt(data[i].IndexedNumber0);
-												Database.customObject9Dao.updateCarStock(sub.toString(),data[i].ProductName);
+												if(!data[i][BaseDAO.TEMP_COL]){
+													var sub :int = - parseInt(data[i].IndexedNumber0);
+													Database.customObject9Dao.updateCarStock(sub.toString(),data[i].ProductName);
+												}
 											}
 											data.removeItemAt(i);
 											i--;
@@ -206,6 +209,8 @@
 					});
 				}else{
 					if(items!=null && entity==Database.customObject2Dao.entity){
+						meterial2OldQuantity = new Dictionary();
+						meterial2InuseQuantity= new Dictionary();
 						//ProductName,IndexedNumber0
 						for each(var co2:Object in items){
 							if(!co2[BaseDAO.TEMP_COL]){
@@ -214,6 +219,13 @@
 									meterial2OldQuantity[co2.ProductName] = meterial2OldQuantity[co2.ProductName]+newVal;
 								}else{
 									meterial2OldQuantity[co2.ProductName] = newVal;
+								}
+							}else{
+								var inusedVAl:int = parseInt(co2.IndexedNumber0);
+								if(meterial2InuseQuantity.hasOwnProperty(co2.ProductName)){
+									meterial2InuseQuantity[co2.ProductName] = meterial2InuseQuantity[co2.ProductName]+inusedVAl;
+								}else{
+									meterial2InuseQuantity[co2.ProductName] = inusedVAl;
 								}
 							}
 						}
@@ -498,7 +510,7 @@
 					newDataProvider.addItem(t);
 				}
 				if(entity==Database.customObject2Dao.entity){
-					if(!checkCarStock(newDataProvider,create,meterial2OldQuantity)){
+					if(!checkCarStock(newDataProvider,create,meterial2OldQuantity,meterial2InuseQuantity)){
 						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
 							if (event.detail==Alert.YES){
 								if(saveToDatabase(newDataProvider)){
@@ -528,18 +540,19 @@
 			protected function updateCardStock(oldValues:Dictionary,newRecordUpdate:ArrayCollection):void{
 				var newValues:Dictionary = new Dictionary();				
 				for each(var co2:Object in newRecordUpdate){
-					var newVal:int = parseInt(co2.IndexedNumber0);
-					if(newValues.hasOwnProperty(co2.ProductName)){
-						newValues[co2.ProductName] = newValues[co2.ProductName]+newVal;
-					}else{
-						newValues[co2.ProductName] = newVal;
+					if(!co2[BaseDAO.TEMP_COL]){
+						var newVal:int = parseInt(co2.IndexedNumber0);
+						if(newValues.hasOwnProperty(co2.ProductName)){
+							newValues[co2.ProductName] = newValues[co2.ProductName]+newVal;
+						}else{
+							newValues[co2.ProductName] = newVal;
+						}
 					}
 				}
 				for(var meterialNR:String in oldValues){
 					var old:int = oldValues[meterialNR];
 					if(newValues.hasOwnProperty(meterialNR)){
-						old = newValues[meterialNR]-old;
-						
+						old = newValues[meterialNR]-old;						
 						delete newValues[meterialNR];
 						
 					}else{
@@ -556,13 +569,17 @@
 				
 			}
 			
-			public static function checkCarStock(newRecord:ArrayCollection,isCreate:Boolean=true,meteria2OldQty:Dictionary=null):Boolean{
+			public static function checkCarStock(newRecord:ArrayCollection,isCreate:Boolean=true,meteria2OldQty:Dictionary=null,meteria2InusedQty:Dictionary=null):Boolean{
 				var meterial2NewQty:Dictionary = new Dictionary();
 				for each(var co2:Object in newRecord){
 					var newVal:int = parseInt(co2.IndexedNumber0);
 					if(meterial2NewQty.hasOwnProperty(co2.ProductName)){
 						meterial2NewQty[co2.ProductName] = meterial2NewQty[co2.ProductName]+newVal;
 					}else{
+						var inuse:Object = Database.customObject2Dao.getInUse(co2.ProductName);
+						if(inuse!=null){
+							newVal=newVal+parseInt(inuse.IndexedNumber0);
+						}
 						meterial2NewQty[co2.ProductName] = newVal;
 					}
 				}
@@ -574,10 +591,17 @@
 						
 						var newQty:int = meterial2NewQty[meterialNr];
 						if(!isCreate && meterialNr!=null){
-							if(meteria2OldQty.hasOwnProperty(meterialNr)){
+							if(meteria2OldQty!=null&&meteria2OldQty.hasOwnProperty(meterialNr)){
 								var oldQty:int=meteria2OldQty[meterialNr];
 								if(oldQty>0){
 									newQty = newQty-oldQty;
+								}
+							}
+							
+							if(meteria2InusedQty!=null && meteria2InusedQty.hasOwnProperty(meterialNr)){
+								var inusedQty:int=meteria2InusedQty[meterialNr];
+								if(inusedQty>0){
+									newQty = newQty-inusedQty;
 								}
 							}
 							

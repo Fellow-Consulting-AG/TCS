@@ -11,6 +11,7 @@
 	
 	<mx:Script>
 		<![CDATA[
+			import com.crmgadget.eval.Parser;
 			import com.hurlant.util.asn1.parser.boolean;
 			
 			import gadget.dao.BaseDAO;
@@ -337,6 +338,12 @@
 					}else{
 						sub = parseInt(item.IndexedNumber0);
 					}
+					var inused:Object = Database.customObject2Dao.getInUse(meterialNumber);
+					if(inused!=null){
+						sub = sub+parseInt(inused.IndexedNumber0);
+					}
+					
+					
 					var carStock:Object = Database.customObject9Dao.findByMeterialNumber(meterialNumber);
 					if(carStock==null || sub>parseInt(carStock.CustomInteger0)){
 						Alert.show(i18n._("CAR_STOCK_EXCEED_MSG"), "", Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
