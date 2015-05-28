@@ -129,18 +129,19 @@
 					editableGrid.addEventListener(KeyboardEvent.KEY_DOWN, function(evt:KeyboardEvent):void {
 						if(evt.keyCode == Keyboard.ENTER || evt.keyCode == Keyboard.TAB){
 							if( editableGrid.editedItemPosition &&  items.length-1 == editableGrid.editedItemPosition.rowIndex && editableGrid.editedItemPosition.columnIndex == editableGrid.columns.length - 1 ){
-								var newObj:Object = {'IndexedNumber0':'', 'CustomPickList0':'', 'IndexedPick0':'', 'IndexedPick1':'', 'IndexedPick2':'', 'QuickSearch1':''};
-								findEvaluatorDefaultValue(newObj,"CustomPickList0");
-								findEvaluatorDefaultValue(newObj,"IndexedPick2");
-								findEvaluatorDefaultValue(newObj,"IndexedPick1");
-								getObjectInPicklist(newObj,"CustomPickList0",countries);
-								getObjectInPicklist(newObj,"IndexedPick2",accountingIndicators);
-								getObjectInPicklist(newObj,"IndexedPick1",units);
-								items.addItem(newObj); //add a blank record								
+//								var newObj:Object = {'IndexedNumber0':'', 'CustomPickList0':'', 'IndexedPick0':'', 'IndexedPick1':'', 'IndexedPick2':'', 'QuickSearch1':''};
+//								findEvaluatorDefaultValue(newObj,"CustomPickList0");
+//								findEvaluatorDefaultValue(newObj,"IndexedPick2");
+//								findEvaluatorDefaultValue(newObj,"IndexedPick1");
+//								getObjectInPicklist(newObj,"CustomPickList0",countries);
+//								getObjectInPicklist(newObj,"IndexedPick2",accountingIndicators);
+//								getObjectInPicklist(newObj,"IndexedPick1",units);
+//								items.addItem(newObj); //add a blank record
+								addNewRow();
 								var index:Number = editableGrid.editedItemPosition.rowIndex+1;
 								editableGrid.dataProvider = items;	
 								//								editableGrid.selectedIndex = index;
-								editableGrid.editedItemPosition = {columnIndex:0, rowIndex:index};
+								editableGrid.editedItemPosition = {columnIndex:1, rowIndex:index};//column 0 is checkbox
 								//editableGrid.validateNow(); //put this will cause in setfocus cell editor
 							}
 						}
@@ -194,17 +195,21 @@
 				}
 				
 				if(create){ //add a new row if it is a created screen.
-					var newObj:Object = {'IndexedNumber0':'', 'CustomPickList0':'', 'IndexedPick0':'', 'IndexedPick1':'', 'IndexedPick2':'', 'QuickSearch1':''};
-					findEvaluatorDefaultValue(newObj,"CustomPickList0");
-					findEvaluatorDefaultValue(newObj,"IndexedPick2");
-					findEvaluatorDefaultValue(newObj,"IndexedPick1")
-					getObjectInPicklist(newObj,"CustomPickList0",countries);
-					getObjectInPicklist(newObj,"IndexedPick2",accountingIndicators);
-					getObjectInPicklist(newObj,"IndexedPick1",units);
-					items.addItem(newObj); //add a blank record
+					addNewRow();
 				}
 				editableGrid.dataProvider = items;
 				editableGrid.validateNow();
+			}
+			
+			protected function addNewRow():void{
+				var newObj:Object = {'IndexedNumber0':'', 'CustomPickList0':'', 'IndexedPick0':'', 'IndexedPick1':'', 'IndexedPick2':'', 'QuickSearch1':''};
+				findEvaluatorDefaultValue(newObj,"CustomPickList0");
+				findEvaluatorDefaultValue(newObj,"IndexedPick2");
+				findEvaluatorDefaultValue(newObj,"IndexedPick1")
+				getObjectInPicklist(newObj,"CustomPickList0",countries);
+				getObjectInPicklist(newObj,"IndexedPick2",accountingIndicators);
+				getObjectInPicklist(newObj,"IndexedPick1",units);
+				items.addItem(newObj); //add a blank record
 			}
 			
 			private function bindEvaluatorValue(item:Object):void{
@@ -286,7 +291,7 @@
 								//Database.begin();
 								for(var i:int=0;i<data.length;i++){
 									if(data[i].batchUpdate == true){
-										Database.getDao(entity).delete_(data[i]);
+										Database.getDao(entity).deleteTemporary(data[i]);
 										data.removeItemAt(i);
 										i--;
 									}
@@ -301,7 +306,7 @@
 					}
 					
 				}else{
-					for(var j:int=0;j<data.length-1;j++){
+					for(var j:int=0;j<data.length;j++){
 						if(data[j].batchUpdate == true){
 							isDelete = true;
 							break;
@@ -311,12 +316,16 @@
 						Alert.show(i18n._('GLOBAL_ARE_YOU_SURE_YOU_WANT_TO_DELETE'),i18n._('GLOBAL_DELETE') , Alert.YES|Alert.NO, this, function(event:CloseEvent):void{
 							if (event.detail==Alert.YES){
 								
-								for(var k:int=0;k<data.length-1;k++){
+								for(var k:int=0;k<data.length;k++){
 									if(data[k].batchUpdate == true){	
 										data.removeItemAt(k);
 										k --;
 									}
-								}		
+								}	
+								if(data.length==0){
+									addNewRow();
+									editableGrid.dataProvider = items;	
+								}
 							}    	 
 						});	
 						

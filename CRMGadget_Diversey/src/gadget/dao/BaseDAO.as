@@ -579,8 +579,14 @@ package gadget.dao
 		}
 
 		public function deleteTemporary(object:Object):void	{
-			stmtDeleteTemporary.parameters[":gadget_id"] = object.gadget_id;
-			exec(stmtDeleteTemporary);
+			var oraId:String = object[fieldOracleId];
+			if(oraId.indexOf("#")!=-1){
+				delete_(object);
+			}else{
+				stmtDeleteTemporary.parameters[":gadget_id"] = object.gadget_id;
+				exec(stmtDeleteTemporary);
+			}
+			
 		}
 
 		public function undeleteTemporary(object:Object):void	{
