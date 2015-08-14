@@ -431,7 +431,7 @@ package gadget.util
 					refreshGrid(detail,grid,objectSQLQuery);
 				};
 				WindowManager.openModal(miniDetail);
-			} else if(status==i18n._('GLOBAL_UPDATE') && selectedItem != null) {
+			} else if((status==i18n._('GLOBAL_UPDATE') ||status==i18n._('GLOBAL_UPDATE_2'))  && selectedItem != null) {
 				miniDetail = new MiniDetail();
 				miniDetail.entity = objectSQLQuery.entity;
 				miniDetail.fields = objectSQLQuery.fields;

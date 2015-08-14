@@ -323,7 +323,7 @@
 			}
 		
 			
-			private function update():Boolean {
+			private function update(nextAction:Function = null):Boolean {
 				//ProductName---meterialnumber;IndexedNumber0--quantity
 				
 				var sub:int =0;
@@ -357,7 +357,11 @@
 										}
 										
 									}
-									close();
+									if(nextAction == null){
+										close();
+									}else{
+										nextAction();
+									}
 								}else{
 									item.IndexedNumber0=oldQuantity;//reset item when save not success
 								}
@@ -392,15 +396,23 @@
 					if(update()) close();
 				}
 			}
+			
+			private function reloadNewRecord():void{
+				if(newItem!=null){
+					item = newItem();
+				}else{
+					item = new Object();
+				}
+				
+				reload();
+			}
+			
 			private function createAndNew():void{
-				if(!checkValidator() && update()){
-					if(newItem!=null){
-						item = newItem();
-					}else{
-						item = new Object();
+				if(!checkValidator()){
+					if(update(reloadNewRecord)){
+						reloadNewRecord();
 					}
 					
-					reload();
 				}
 			}
 			
