@@ -1064,7 +1064,7 @@ package gadget.util
 			massInsertBtn.visible = false;
 			massUpdateBtn.visible = false;
 			
-			if( queryString.indexOf("custom_object_2") > 0  || queryString.indexOf("customobject1") > 0 ){
+			if(queryString.indexOf("customobject1") > 0 ){
 				massInsertBtn.visible = true;
 				massUpdateBtn.visible = true;
 			}
@@ -1108,7 +1108,9 @@ package gadget.util
 					hbox3.addChild(barCodeBtn);
 					hbox3.addChild(batchInsertBtn);
 					displayObj.addChild(hbox);
-					displayObj.addChild(hbox2);
+					if(massInsertBtn.visible || massUpdateBtn.visible){
+						displayObj.addChild(hbox2);
+					}
 					displayObj.addChild(hbox3);
 				}else{
 					if(serviceHistory!=null){						
