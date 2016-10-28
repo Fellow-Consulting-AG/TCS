@@ -148,6 +148,10 @@ package gadget.util
 					
 					var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
 					if(StringUtils.isEmpty(SAMLResponse)){
+						//try to get value from old version
+						SAMLResponse = getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");
+					}
+					if(StringUtils.isEmpty(SAMLResponse)){
 						
 						var actionUrl:String=getValue(body,"action=\"","\"");
 						req = new URLRequest(ssoHost+actionUrl);
@@ -218,17 +222,36 @@ package gadget.util
 				errorHandler(error);
 			}
 		}
-		
-		private static function postParse(body:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,targetUrl:String):void{
-			var actionUrl:String=getValue(body,"action=\"","\"");						
-			var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");		
+import gadget.util.StringUtils;
+
+		/**
+		 * var actionUrl:String=getValue(body,"Action=\"","\"");						
+			var SAMLResponse:String=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
 			var req:URLRequest= new URLRequest(actionUrl);
 			req.method=URLRequestMethod.POST;
 			req.followRedirects=false;
 			
 			req.useCache=false;
 			var params:URLVariables = new URLVariables();
-			params["RelayState"] = targetUrl;
+			params["TARGET"] = targetUrl;
+		 * */
+		private static function postParse(body:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,targetUrl:String):void{
+			var actionUrl:String=getValue(body,"action=\"","\"");	
+			var targetParam:String = "RelayState";			
+			var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
+			if(StringUtils.isEmpty(actionUrl)){
+				//OldVersion
+				targetParam="TARGET";
+				actionUrl= getValue(body,"Action=\"","\"");
+				SAMLResponse=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
+			}
+			var req:URLRequest= new URLRequest(actionUrl);
+			req.method=URLRequestMethod.POST;
+			req.followRedirects=false;
+			
+			req.useCache=false;
+			var params:URLVariables = new URLVariables();
+			params[targetParam] = targetUrl;
 			params["SAMLResponse"] = SAMLResponse;
 			req.data=params;
 			var haveLocation:Boolean = false;
