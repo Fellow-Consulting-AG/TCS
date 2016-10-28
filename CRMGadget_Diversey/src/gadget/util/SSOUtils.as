@@ -133,7 +133,7 @@ package gadget.util
 				req.followRedirects=true;
 				
 				req.useCache=true;
-				req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+				//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
 				
 				var loader:URLLoader=new URLLoader();
 				loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
@@ -146,7 +146,7 @@ package gadget.util
 					
 					var body:String = URLLoader(e.target).data;
 					
-					var SAMLResponse:String=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");	
+					var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
 					if(StringUtils.isEmpty(SAMLResponse)){
 						
 						var actionUrl:String=getValue(body,"action=\"","\"");
@@ -170,7 +170,7 @@ package gadget.util
 							
 							
 							
-							req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+							//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
 							req.contentType="application/x-www-form-urlencoded";
 							
 							var params:URLVariables = new URLVariables();
@@ -220,15 +220,15 @@ package gadget.util
 		}
 		
 		private static function postParse(body:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,targetUrl:String):void{
-			var actionUrl:String=getValue(body,"Action=\"","\"");						
-			var SAMLResponse:String=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
+			var actionUrl:String=getValue(body,"action=\"","\"");						
+			var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");		
 			var req:URLRequest= new URLRequest(actionUrl);
 			req.method=URLRequestMethod.POST;
 			req.followRedirects=false;
 			
 			req.useCache=false;
 			var params:URLVariables = new URLVariables();
-			params["TARGET"] = targetUrl;
+			params["RelayState"] = targetUrl;
 			params["SAMLResponse"] = SAMLResponse;
 			req.data=params;
 			var haveLocation:Boolean = false;
@@ -255,7 +255,7 @@ package gadget.util
 					var req1:URLRequest= new URLRequest(targetUrl);
 					req1.method=URLRequestMethod.POST;
 					req1.followRedirects=false;
-					req1.userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0";			
+					//req1.userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:18.0) Gecko/20100101 Firefox/18.0";			
 					req1.useCache=false;
 					var params:URLVariables = new URLVariables();
 					params["command"] = "ssologin";
@@ -286,7 +286,7 @@ package gadget.util
 			req.followRedirects=true;
 			
 			req.useCache=true;
-			req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+			//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
 			
 			var loader:URLLoader=new URLLoader();
 			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
@@ -327,7 +327,7 @@ package gadget.util
 			
 			var req:URLRequest=new URLRequest(locationUrl);
 			req.method=URLRequestMethod.GET;
-			req.userAgent = "Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1";
+			//req.userAgent = "Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1";
 			req.useCache=false;
 			
 			var loader:URLLoader=new URLLoader();
