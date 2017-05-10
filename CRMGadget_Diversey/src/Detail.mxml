@@ -176,10 +176,9 @@
 					item.CustomPickList10 = "ONST";
 					item.CustomPickList11 = "TECO";
 					key.push("CustomPickList10");
-					key.push("CustomPickList11");
-					
+					key.push("CustomPickList11");					
 					//#1118 CRO
-					item.CustomDate3 = DateUtils.format(new Date(),DateUtils.DATABASE_DATETIME_FORMAT);
+					item.CustomDate3 = DateUtils.format(GUIUtils.getUTCDateTime(),DateUtils.DATABASE_DATETIME_FORMAT);
 					key.push("CustomDate3");
 					
 				}

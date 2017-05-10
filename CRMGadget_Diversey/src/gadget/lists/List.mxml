@@ -920,8 +920,9 @@
 								showMesage(type);
 								return;
 							}
+							var now:Date = GUIUtils.getUTCDateTime();
 							//#1118 CRO
-							item.CustomDate2 = DateUtils.format(new Date(),DateUtils.DATABASE_DATETIME_FORMAT);	
+							item.CustomDate2 = DateUtils.format(now,DateUtils.DATABASE_DATETIME_FORMAT);	
 							//#5936-------Mony
 							item.CustomDate27 = DateUtils.format(new Date(),DateUtils.DATABASE_DATE_FORMAT);	
 						}else if(type==completeType){

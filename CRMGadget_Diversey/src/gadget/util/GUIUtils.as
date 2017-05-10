@@ -1250,6 +1250,12 @@ package gadget.util
 			return displayObj;
 		}		
 		
+		public static function getUTCDateTime():Date{
+			var d:Date = new Date();			
+			return new Date(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate(),d.getUTCHours(),d.getUTCMinutes(),d.getUTCSeconds(),d.getUTCMilliseconds());
+			
+		}
+		
 		public static function getInputFieldValue(component:DisplayObject, fieldInfo:Object):String {
 			var value:String;
 			if(component is Label) {
