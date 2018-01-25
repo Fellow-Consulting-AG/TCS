@@ -1,7 +1,5 @@
 package gadget.util
 {
-	
-	
 	import flash.events.Event;
 	import flash.events.HTTPStatusEvent;
 	import flash.events.IOErrorEvent;
@@ -24,6 +22,8 @@ package gadget.util
 	
 	public class SSOUtils
 	{
+		
+		
 		
 		private static var sessionId:String; 
 		private static var techSessionId:String;
@@ -62,9 +62,51 @@ package gadget.util
 		}
 		
 		
+		
+		
+		private static function invokeURL(url:String,errorHandler:Function,responseStatus:Function,complete:Function=null,usecach:Boolean=true,followRedirect:Boolean=false,post:Boolean=false):void{
+			var req:URLRequest=new URLRequest(url);
+			req.followRedirects=followRedirect;
+			if(post){
+				req.method=URLRequestMethod.POST;
+			}else{
+				req.method=URLRequestMethod.GET;
+			}	
+			
+			req.cacheResponse=false;
+			req.useCache=usecach;
+			var loader:URLLoader = new URLLoader();
+			
+			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {				
+				errorHandler(e);
+			});
+			if(responseStatus!=null){
+				loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,function(e:HTTPStatusEvent):void {				
+					responseStatus(e);
+				});
+			}
+			if(complete!=null){
+				loader.addEventListener(Event.COMPLETE,	function(e:Event):void{
+					complete(e);
+				});
+			}
+			loader.load(req);
+		}
+		
+		
+		
 		/*
 		* 
 		*/
+		/**
+		 * 
+		 * @param pref
+		 * @param successHandler
+		 * @param errorHandler
+		 * @param isTestLogin
+		 * @param isAddmin
+		 * 
+		 */
 		public static function execute(pref:Object, successHandler:Function,errorHandler:Function,isTestLogin:Boolean=false,isAddmin:Boolean=false):void{
 			if(isTestLogin){
 				resetSession();
@@ -84,22 +126,26 @@ package gadget.util
 			var sodhost:String = pref.sodhost;
 			var strForwardSlash:String = sodhost.charAt(sodhost.length-1) == "/" ? "" : "/";
 			var url:String = sodhost + strForwardSlash +  "Services/Integration?command=ssoitsurl&ssoid="+pref.company_sso_id;			
-			
-			
-			
-			var req:URLRequest=new URLRequest(url);
-			req.followRedirects=false;
-			req.method=URLRequestMethod.GET;
-			req.useCache=false;
-			var loader:URLLoader = new URLLoader();
-			
-			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {				
-				errorHandler(e);
-			});
-			loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,function(e:HTTPStatusEvent):void {				
+			invokeURL(url,errorHandler,function(e:HTTPStatusEvent):void{
 				doGetLocation(pref,successHandler,errorHandler,e,isTestLogin);
-			});
-			loader.load(req);
+			},null,false);
+			
+			
+			
+			
+			//			var req:URLRequest=new URLRequest(url);
+			//			req.followRedirects=false;
+			//			req.method=URLRequestMethod.GET;
+			//			req.useCache=false;
+			//			var loader:URLLoader = new URLLoader();
+			//			
+			//			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {				
+			//				errorHandler(e);
+			//			});
+			//			loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,function(e:HTTPStatusEvent):void {				
+			//				doGetLocation(pref,successHandler,errorHandler,e,isTestLogin);
+			//			});
+			//			loader.load(req);
 			
 		}
 		
@@ -118,99 +164,168 @@ package gadget.util
 			return '';
 		}
 		
+		
+		
+		private static function doSubmitLogin(url:String,targetURL:String,loginUrl:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean):void{
+			var req:URLRequest=new URLRequest(url);
+			req.method=URLRequestMethod.POST;
+			req.followRedirects=true;
+			req.useCache=false;
+			
+			
+			
+			
+			//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+			req.contentType="application/x-www-form-urlencoded";
+			
+			var params:URLVariables = new URLVariables();
+			params["Ecom_User_ID"] = pref.sodlogin;//"VIPUSER2";
+			params["Ecom_Password"] = pref.sodpass;//"welcome2";
+			params["option"] = "credential";
+			req.data=params;
+			var	loader:URLLoader=new URLLoader();
+			
+			
+			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {					
+				errorHandler(e);
+			});
+			loader.addEventListener(Event.COMPLETE,function(e:Event):void {			
+				
+				invokeURLAndParse(pref,successHandler,errorHandler,isTestLogin,targetURL,loginUrl);
+				
+			});					
+			
+			
+			loader.load(req);
+		}
+		
 		private static function doGetLocation(pref:Object,successHandler:Function,errorHandler:Function,e:HTTPStatusEvent,isTestLogin:Boolean):void{
 			if(e.status==200){
 				var headers:Array=e.responseHeaders;
 				
 				
-				
+				var hasSession:Boolean=false;
 				var loginUrl:String=getHeaderValue(headers,'X-SsoItsUrl');	
 				var ssoHost:String = URLUtil.getProtocol(loginUrl)+"://"+URLUtil.getServerNameWithPort(loginUrl);
 				var targetURL:String = loginUrl.substr(loginUrl.indexOf("TARGET"),loginUrl.length);
 				targetURL = unescape(targetURL.split("=")[1]);
-				var req:URLRequest=new URLRequest(loginUrl);
-				req.method=URLRequestMethod.GET;
-				req.followRedirects=true;
-				
-				req.useCache=true;
-				//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-				
-				var loader:URLLoader=new URLLoader();
-				loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
-					errorHandler(e);
-				});
-				
-				var isBreak:Boolean = false; 				
-				
-				loader.addEventListener(Event.COMPLETE,	function(e:Event):void{
-					
-					var body:String = URLLoader(e.target).data;
-					
-					var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
-					if(StringUtils.isEmpty(SAMLResponse)){
-						//try to get value from old version
-						SAMLResponse = getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");
-					}
-					if(StringUtils.isEmpty(SAMLResponse)){
-						
-						var actionUrl:String=getValue(body,"action=\"","\"");
-						req = new URLRequest(ssoHost+actionUrl);
-						req.method=URLRequestMethod.GET;
-						req.followRedirects=true;
-						
-						req.useCache=true;
-						
-						loader=new URLLoader();
-						loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {					
-							errorHandler(e);
-						});
-						
-						loader.addEventListener(Event.COMPLETE,function(e:Event):void {	
-							req = new URLRequest(ssoHost+"/nidp/app/login?sid=0");
-							req.method=URLRequestMethod.POST;
-							req.followRedirects=true;
-							req.useCache=false;
-							
-							
-							
-							
-							//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
-							req.contentType="application/x-www-form-urlencoded";
-							
-							var params:URLVariables = new URLVariables();
-							params["Ecom_User_ID"] = pref.sodlogin;//"VIPUSER2";
-							params["Ecom_Password"] = pref.sodpass;//"welcome2";
-							params["option"] = "credential";
-							req.data=params;
-							loader=new URLLoader();
-							
-							
-							loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {					
-								errorHandler(e);
-							});
-							loader.addEventListener(Event.COMPLETE,function(e:Event):void {			
+				invokeURL(ssoHost,errorHandler,function(e:HTTPStatusEvent):void{					
+					loginUrl = e.responseURL;
+					var ssoHost:String = URLUtil.getProtocol(loginUrl)+"://"+URLUtil.getServerNameWithPort(loginUrl);
+					var targetURL2:String = loginUrl.substr(loginUrl.indexOf("target"),loginUrl.length);
+					targetURL2 = unescape(targetURL2.split("=")[1]);					
+					if(targetURL2!=null &&"null"!=targetURL2){
+						invokeURL(targetURL2,errorHandler,function(e:HTTPStatusEvent):void{							
+							invokeURL(e.responseURL,errorHandler,null,function(e:Event):void{								
+								var body:String = e.target.data;
+								var url:String = ssoHost+getValue(body,"action=\"", "\"");
+								invokeURL(url,errorHandler,null,function(e:Event):void{									
+									var loginBody:String = e.target.data;
+									var loginAction = getValue(loginBody,"action=\"", "\"");									
+									doSubmitLogin(loginAction,targetURL2,targetURL,pref,successHandler,errorHandler,isTestLogin);
+									
+								},true,true,true);
 								
-								invokeURLAndParse(pref,successHandler,errorHandler,isTestLogin,loginUrl,targetURL);
-								
-							});					
+							},true,true);
 							
-							
-							loader.load(req);
-						});			
-						
-						loader.load(req);
-						
+						},null,true,true);
 					}else{
-						//have session
-						postParse(body,pref,successHandler,errorHandler,isTestLogin,targetURL);
-						
+						hasSession=true;
 					}
 					
-					
-		
-					
-				});
-				loader.load(req);
+				},function(e:Event):void{
+				
+					if(hasSession){
+						var body:String = URLLoader(e.target).data;
+						postParse(body,pref,successHandler,errorHandler,isTestLogin,targetURL);
+					}
+				},false,true);
+				
+				
+				
+				//				var req:URLRequest=new URLRequest(loginUrl);
+				//				req.method=URLRequestMethod.GET;
+				//				req.followRedirects=false;
+				//				
+				//				req.useCache=true;
+				//				//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+				//				
+				//				var loader:URLLoader=new URLLoader();
+				//				loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
+				//					errorHandler(e);
+				//				});
+				//				
+				//				var isBreak:Boolean = false; 				
+				//				
+				//				loader.addEventListener(Event.COMPLETE,	function(e:Event):void{
+				//					
+				//					var body:String = URLLoader(e.target).data;
+				//					
+				//					var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
+				//					if(StringUtils.isEmpty(SAMLResponse)){
+				//						//try to get value from old version
+				//						SAMLResponse = getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");
+				//					}
+				//					if(StringUtils.isEmpty(SAMLResponse)){
+				//						
+				//						var actionUrl:String=getValue(body,"action=\"","\"");
+				//						req = new URLRequest(ssoHost+actionUrl);
+				//						req.method=URLRequestMethod.GET;
+				//						req.followRedirects=false;
+				//						
+				//						req.useCache=true;
+				//						
+				//						loader=new URLLoader();
+				//						loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {					
+				//							errorHandler(e);
+				//						});
+				//						
+				//						loader.addEventListener(Event.COMPLETE,function(e:Event):void {	
+				//							req = new URLRequest(ssoHost+"/nidp/app/login?sid=0");
+				//							req.method=URLRequestMethod.POST;
+				//							req.followRedirects=true;
+				//							req.useCache=false;
+				//							
+				//							
+				//							
+				//							
+				//							//req.userAgent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.9.0.1) Gecko/2008070208 Firefox/3.0.1";
+				//							req.contentType="application/x-www-form-urlencoded";
+				//							
+				//							var params:URLVariables = new URLVariables();
+				//							params["Ecom_User_ID"] = pref.sodlogin;//"VIPUSER2";
+				//							params["Ecom_Password"] = pref.sodpass;//"welcome2";
+				//							params["option"] = "credential";
+				//							req.data=params;
+				//							loader=new URLLoader();
+				//							
+				//							
+				//							loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void {					
+				//								errorHandler(e);
+				//							});
+				//							loader.addEventListener(Event.COMPLETE,function(e:Event):void {			
+				//								
+				//								invokeURLAndParse(pref,successHandler,errorHandler,isTestLogin,loginUrl,targetURL);
+				//								
+				//							});					
+				//							
+				//							
+				//							loader.load(req);
+				//						});			
+				//						
+				//						loader.load(req);
+				//						
+				//					}else{
+				//						//have session
+				//						postParse(body,pref,successHandler,errorHandler,isTestLogin,targetURL);
+				//						
+				//					}
+				//					
+				//					
+				//					
+				//					
+				//				});
+				//				loader.load(req);
 				
 				
 				
@@ -222,36 +337,32 @@ package gadget.util
 				errorHandler(error);
 			}
 		}
-import gadget.util.StringUtils;
-
+		
+		
 		/**
 		 * var actionUrl:String=getValue(body,"Action=\"","\"");						
-			var SAMLResponse:String=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
-			var req:URLRequest= new URLRequest(actionUrl);
-			req.method=URLRequestMethod.POST;
-			req.followRedirects=false;
-			
-			req.useCache=false;
-			var params:URLVariables = new URLVariables();
-			params["TARGET"] = targetUrl;
+		 var SAMLResponse:String=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
+		 var req:URLRequest= new URLRequest(actionUrl);
+		 req.method=URLRequestMethod.POST;
+		 req.followRedirects=false;
+		 
+		 req.useCache=false;
+		 var params:URLVariables = new URLVariables();
+		 params["TARGET"] = targetUrl;
 		 * */
-		private static function postParse(body:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,targetUrl:String):void{
-			var actionUrl:String=getValue(body,"action=\"","\"");	
-			var targetParam:String = "RelayState";			
-			var SAMLResponse:String=getValue(body,"name=\"SAMLResponse\" value=\"","\"");	
-			if(StringUtils.isEmpty(actionUrl)){
-				//OldVersion
-				targetParam="TARGET";
-				actionUrl= getValue(body,"Action=\"","\"");
-				SAMLResponse=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");		
-			}
+		private static function postParse(body:String,pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,loginUrl:String):void{
+			var actionUrl:String=getValue(body,"Action=\"","\"");	
+			var targetUrl:String=getValue(body,"NAME=\"TARGET\" Value=\"","\">");
+			var targetParam:String = "TARGET";			
+			var SAMLResponse=getValue(body,"NAME=\"SAMLResponse\" Value=\"","\">");	
+			
 			var req:URLRequest= new URLRequest(actionUrl);
 			req.method=URLRequestMethod.POST;
 			req.followRedirects=false;
 			
-			req.useCache=false;
+			req.useCache=true;
 			var params:URLVariables = new URLVariables();
-			params[targetParam] = targetUrl;
+			params[targetParam] = loginUrl;
 			params["SAMLResponse"] = SAMLResponse;
 			req.data=params;
 			var haveLocation:Boolean = false;
@@ -301,10 +412,10 @@ import gadget.util.StringUtils;
 		}
 		
 		
-		private static function invokeURLAndParse(pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,loginUrl:String,targetUrl:String):void{
+		private static function invokeURLAndParse(pref:Object,successHandler:Function,errorHandler:Function,isTestLogin:Boolean,targetUrl:String,loginUrl:String):void{
 			
 			
-			var req:URLRequest=new URLRequest(loginUrl);
+			var req:URLRequest=new URLRequest(targetUrl);
 			req.method=URLRequestMethod.GET;
 			req.followRedirects=true;
 			
@@ -318,7 +429,7 @@ import gadget.util.StringUtils;
 			loader.addEventListener(Event.COMPLETE,	function(e:Event):void{
 				
 				var body:String = URLLoader(e.target).data;
-				postParse(body,pref,successHandler,errorHandler,isTestLogin,targetUrl);
+				postParse(body,pref,successHandler,errorHandler,isTestLogin,loginUrl);
 				
 			});
 			loader.load(req);	
@@ -340,7 +451,7 @@ import gadget.util.StringUtils;
 		}
 		
 		private static function doGetSessionId(pref:Object,successHandler:Function,errorHandler:Function,e:HTTPStatusEvent,isTestLogin:Boolean):void{
-						
+			
 			var locationUrl:String = getHeaderValue(e.responseHeaders,"Location");
 			
 			if(locationUrl==''){
@@ -348,19 +459,33 @@ import gadget.util.StringUtils;
 				return;
 			}
 			
-			var req:URLRequest=new URLRequest(locationUrl);
-			req.method=URLRequestMethod.GET;
-			//req.userAgent = "Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1";
-			req.useCache=false;
-			
-			var loader:URLLoader=new URLLoader();
-			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
-				errorHandler(e);
+			invokeURL(locationUrl,errorHandler,function(e2:HTTPStatusEvent):void{
+				var locationUrl2:String = getHeaderValue(e2.responseHeaders,"Location");
+				if(locationUrl==''){
+					errorHandler(new IOErrorEvent(IOErrorEvent.IO_ERROR,false,false,"INVALID_USER_PASSWORD"));;
+					return;
+				}
+				invokeURL(locationUrl2,errorHandler,function(e3:HTTPStatusEvent):void{
+					doExecute(successHandler,errorHandler,e3,isTestLogin);	
+				});
+				
 			});
-			loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,function(e:HTTPStatusEvent):void {				
-				doExecute(successHandler,errorHandler,e,isTestLogin);					
-			});			
-			loader.load(req);
+			
+			
+			
+			//			var req:URLRequest=new URLRequest(locationUrl);
+			//			req.method=URLRequestMethod.GET;
+			//			//req.userAgent = "Mozilla/6.0 (Windows NT 6.2; WOW64; rv:16.0.1) Gecko/20121011 Firefox/16.0.1";
+			//			req.useCache=true;
+			//			
+			//			var loader:URLLoader=new URLLoader();
+			//			loader.addEventListener(IOErrorEvent.IO_ERROR,function(e:IOErrorEvent):void{
+			//				errorHandler(e);
+			//			});
+			//			loader.addEventListener(HTTPStatusEvent.HTTP_RESPONSE_STATUS,function(e:HTTPStatusEvent):void {				
+			//				doExecute(successHandler,errorHandler,e,isTestLogin);					
+			//			});			
+			//			loader.load(req);
 			
 			
 		}

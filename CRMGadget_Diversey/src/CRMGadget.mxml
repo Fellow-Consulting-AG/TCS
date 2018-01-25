@@ -360,7 +360,7 @@
 						}catch(e:Error){
 							// No license
 						}
-						initKitchenReportPath();
+						//initKitchenReportPath();
 						mainWindow = new MainWindow();
 						mainWindow.crmGadget = that;
 						mainWindow.open();
