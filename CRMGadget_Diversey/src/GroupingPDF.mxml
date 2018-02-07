@@ -2,8 +2,7 @@
 <mx:Window 
 	xmlns:mx="http://www.adobe.com/2006/mxml"
 	xmlns:control="gadget.control.*"
-	resizable="false" height="{height1}"
-	width="{width1}" 
+	resizable="false" 
 	title="Grouping PDF"
 	showFlexChrome="false" systemChrome="none" xmlns:form="gadget.form.*"
 	creationComplete="loadData();init()" xmlns:s="library://ns.adobe.com/flex/spark" xmlns:local="*"
@@ -18,10 +17,12 @@
 			import gadget.dao.Database;
 			import gadget.dao.PreferencesDAO;
 			import gadget.i18n.i18n;
+			import gadget.service.LocaleService;
 			import gadget.service.PicklistService;
 			import gadget.service.SupportService;
 			import gadget.util.DateUtils;
 			import gadget.util.FieldUtils;
+			import gadget.util.GUIUtils;
 			import gadget.util.StringUtils;
 			import gadget.util.Utils;
 			
@@ -76,10 +77,10 @@
 			private var isPrinting:Boolean; // To check preview or print by grouping report
 			[Bindable] public var isPreview:Boolean; // To check preview or print by single report
 			[Bindable] public var serviceRequest:Object;
-			[Bindable] private var width1:int ;
+			//[Bindable] public var width1:int ;
 			[Bindable] public var refreshDetail:Function;
 			[Bindable] public var postExport:Function;
-			[Bindable] private var height1:int;
+			//[Bindable] public var height1:int;
 			[Bindable] private var paddingTop:int;
 			
 			private function init():void{
@@ -90,8 +91,24 @@
 					this.close();
 				}
 			}
+			
+			private function updateServiceRequest(service:Object):void{
+				var customerSign:Boolean = !StringUtils.isEmpty(epadPanel.stringImage);
+				service.CustomPickList5 = "Completed";
+				//#1118 CRO
+				service.Status = "Closed";
+				//Mony--should be set update as true
+				service.local_update = new Date().getTime();
+				//bug#17613----customer puts a signature						
+				service.CustomBoolean19=customerSign;
+				//update rate
+				setRateValue(service);
+				//service.CustomText4 = txtUserName.text;
+				Database.getDao(Database.serviceDao.entity).update(service);
+			}
 			//Update field Order final status to Technical Completed when the grouping pdf has attached #935 CRO
 			private function updateComplettion(lstService:ArrayCollection):void{
+				
 				if(serviceRequest != null){ //single report
 					//bug#7304--update all fields from detail screen
 					//var obj:Object = Database.getDao(Database.serviceDao.entity).findByGadgetId(serviceRequest.gadget_id);
@@ -99,10 +116,7 @@
 						//update onloy field tcs offline status
 						//obj.CustomPickList5 = "Completed";
 						//obj.Status = "Closed";
-						serviceRequest.CustomPickList5 = "Completed";
-						//#1118 CRO
-						serviceRequest.Status = "Closed";
-						serviceRequest.local_update = new Date().getTime();
+						updateServiceRequest(serviceRequest);
 						//#7882 CRO
 						//serviceRequest.CustomText4 = txtUserName.text;
 						Database.getDao(Database.serviceDao.entity).update(serviceRequest);
@@ -118,13 +132,7 @@
 				}else{ //Grouping report
 					Database.begin();
 					for each(var service:Object in lstService){
-						service.CustomPickList5 = "Completed";
-						//#1118 CRO
-						service.Status = "Closed";
-						//Mony--should be set update as true
-						service.local_update = new Date().getTime();
-						//service.CustomText4 = txtUserName.text;
-						Database.getDao(Database.serviceDao.entity).update(service);
+						updateServiceRequest(service);
 					}
 					Database.commit();
 				}
@@ -147,12 +155,13 @@
 					groupingGrid.visible = false;
 					groupingGrid.percentHeight = 0;
 					groupingGrid.percentWidth =0 ;
-					width1 = 350;
-					height1 = 210;
+					
+					//width1 = 400;
+					//height1 = 350;
 					paddingTop = 0;
 					//#959 CRO
 					fileName = sr[0].IndexedShortText1 + "-" +sr[0].CustomText40+ ".pdf"; //display JDI TCS Order Number
-				
+					viewRateValue(serviceRequest);
 				}else{
 					var columns:ArrayCollection = new ArrayCollection([
 						{element_name:"*"}]);
@@ -162,14 +171,30 @@
 						data = Database.getDao(Database.serviceDao.entity).findAll(columns,filter);				
 						groupingGrid.dataProvider = data;
 					}
-					width1 = 700;
-					height1 = 450
+					//width1 = 700;
+					//height1 = 500
 					paddingTop = 35;
 					groupPDFPreview.visible = true;
 					if(data.length>0){
-					fileName ="Merged Report-" +data[0].CustomText42 + "-"  +  DateUtils.format(new Date(),"DD-MM-YYYY") + ".pdf"; //Customer PO Number
+						viewRateValue(data[0]);
+					  fileName ="Merged Report-" +data[0].CustomText42 + "-"  +  DateUtils.format(new Date(),"DD-MM-YYYY") + ".pdf"; //Customer PO Number
 					}
 				}
+				txtUserName.setFocus();
+			}
+			
+			private function  viewRateValue(service:Object):void{
+				cboSatisfied.selectedIndex=Utils.getComboIndex(cboSatisfied,service.CustomPickList51);
+				txtImproveNote.text=service.CustomNote0;
+			}
+			private function  setRateValue(service:Object):void{
+				var selectedObj:Object = cboSatisfied.selectedItem;
+				if(selectedObj!=null&& selectedObj.data!=null){
+					service.CustomPickList51 = selectedObj.data;
+				}else{
+					service.CustomPickList51='';
+				}
+				service.CustomNote0=txtImproveNote.text;
 			}
 			
 			private function getOwnerId():String{
@@ -911,6 +936,18 @@
 				}
 				return (DateUtils.format(DateUtils.guessAndParse(dateString), formatString));
 			}
+			
+			private function getRateHeader():String{
+				var obj:Object=Database.customFieldTranslatorDao.selectField('custom_header','PDF_RATE_HEADER',LocaleService.getLanguageCode());
+				if(obj==null){
+					obj = Database.customFieldTranslatorDao.selectField('custom_header','PDF_RATE_HEADER','ENU');
+				}
+				if(obj!=null){
+					return obj.displayName;
+				}
+				
+				return 'Please rate your satisfaction with this visit';
+			}
 		
 		]]>
 	</mx:Script>
@@ -945,7 +982,15 @@
 					</mx:HBox>	
 				</mx:VBox>
 			</mx:Canvas>
-			
+			<mx:Canvas id="rateCanvas" width="100%">
+				<mx:VBox height="100%">		
+					<mx:Label fontWeight="bold" text="{getRateHeader()}"/>
+					<mx:Label text="{FieldUtils.getFieldDisplayName(Database.serviceDao.entity,'CustomPickList51')}"/>
+					<mx:ComboBox id="cboSatisfied" width="250" dataProvider="{PicklistService.getPicklist(Database.serviceDao.entity, 'CustomPickList51')}"/>
+					<mx:Label text="{FieldUtils.getFieldDisplayName(Database.serviceDao.entity,'CustomNote0')}"/>
+					<mx:TextArea id="txtImproveNote" height="100" width="250"/>					
+				</mx:VBox>
+			</mx:Canvas>
 			<mx:Canvas id="signCanvas" >
 				<mx:HBox paddingLeft="100">
 					<control:EpadSignPDF id="epadPanel" height="0" width="100"  groupingPDF="{this}"/>

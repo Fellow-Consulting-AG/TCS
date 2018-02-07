@@ -164,6 +164,7 @@ package gadget.dao
 				]);
 		
 		private var textColumns:Array = [
+			'CustomNote0',
 			'AccountExternalSystemId',
 			'AccountId',
 			'AccountLocation',

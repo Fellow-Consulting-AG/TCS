@@ -1869,13 +1869,26 @@ package gadget.util {
 			commitObjects(dao,xml.elements("filter_translations").children());
 			
 			
+				//save custom header translate
+			Database.customFieldTranslatorDao.delete_({entity:'custom_header'});
+				commitObjects(Database.customFieldTranslatorDao,xml.elements("custom_headers").children(),true,function(obj:Object):void{
+					if(obj.hasOwnProperty('fieldName')){
+						obj['column_name']=obj['fieldName'];
+					}else{
+						//try without capital leter
+						obj['column_name']=obj['fieldname'];
+					}
+					obj['entity']='custom_header';
+				}
+			);
+			
 			if(reload!=null) reload();
 			
 		}
 		private static function getDefaultSyncOrder(entity:String):String {
 			return Database.getSyn_order(entity);
 		}
-		public static function commitObjects(dao:BaseSQL,xmlList:XMLList, isCommite:Boolean = true):void{
+		public static function commitObjects(dao:BaseSQL,xmlList:XMLList, isCommite:Boolean = true,initBeforeSave:Function=null):void{
 			if(xmlList==null) return;
 			if(isCommite){
 				Database.begin();
@@ -1895,6 +1908,9 @@ package gadget.util {
 						obj[field.name().localName]=checkNullValue(field.children()[0]);
 					}
 					
+				}
+				if(initBeforeSave){
+					initBeforeSave(obj);
 				}
 				if(dao is BaseDAO){
 					BaseDAO(dao).insert(obj);

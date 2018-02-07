@@ -1019,6 +1019,7 @@
 						<depthstructuretree/>
 						<filter_translations/>
 						<report_admins/>
+						<custom_headers/>
 					</configuration>;
 				
 				for each(var obj:Object in Database.industryDAO.getDifferenceLanguage()) {
@@ -1441,7 +1442,7 @@
 				generateXML(configXml.elements("filter_translations"),"filter_translation",filterData);				
 				//---------------------- TCS Report Admin ----------------------------------------
 				exportReportAdmin(configXml);
-				
+				exportCustomHeader(configXml);
 				var f:File = new File();
 				buttonbardetail.enabled = false;
 				buttonsconfigure.enabled = false;
@@ -1510,6 +1511,19 @@
 						generateXML(configXml.elements("report_admins") , "report", reportAdminChildData);
 					}
 				}
+			}
+			
+			private function exportCustomHeader(configXml:XML):void{
+				var translates:Array = Database.customFieldTranslatorDao.fetch({"entity":"custom_header"});
+				var headers:Array = new Array();
+				for each(var obj:Object in translates){
+					var header:Object =new Object();
+					header.languageCode = obj.languageCode;
+					header.fieldName=obj.fieldName;
+					header.displayName=obj.displayName;
+					headers.push(header);
+				}
+				generateXML(configXml.elements("custom_headers"),"custom_header",headers);
 			}
 			
 			private function importConfiguration(impPopup:ImportFiledOOD):void{

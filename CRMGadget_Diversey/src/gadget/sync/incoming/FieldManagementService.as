@@ -1,14 +1,19 @@
 package gadget.sync.incoming {
+	import com.adobe.utils.StringUtil;
+	
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
+	import flash.utils.Dictionary;
 	
 	import gadget.dao.DAOUtils;
 	import gadget.dao.Database;
 	import gadget.dao.SupportDAO;
 	import gadget.dao.SupportRegistry;
 	import gadget.lists.List;
+	import gadget.service.LocaleService;
 	import gadget.sync.task.SyncTask;
 	import gadget.util.FieldUtils;
+	import gadget.util.StringUtils;
 	
 	import mx.collections.ArrayCollection;
 	import mx.rpc.events.ResultEvent;
@@ -122,11 +127,26 @@ package gadget.sync.incoming {
 						fieldRec.entity = entity;
 						Database.fieldManagementServiceDao.replace(fieldRec);
 						try{
+							var mapTranslate:Dictionary = new Dictionary();
 							for each (var trans:XML in field.ns2::ListOfFieldTranslations[0].ns2::FieldTranslation) {
 								var transRec:Object = populate(trans, Database.fieldTranslationDataDao.getColumns());
 								transRec.entity = entity;
 								transRec.Name = fieldRec.Name;
+								mapTranslate[transRec.LanguageCode] = transRec.DisplayName;
 								Database.fieldTranslationDataDao.replace(transRec);
+							}
+							if(Database.checkField(entity,fieldRec.Name) && Database.fieldDao.findFieldByNameIgnoreCase(entity,fieldRec.Name)==null){
+								var fieldObj:Object ={
+									'entity': entity,
+									'element_name': fieldRec.Name,
+										'display_name': getDisplayName(fieldRec,mapTranslate),
+										'data_type':   getFieldType(fieldRec)
+								};
+								try{
+									Database.fieldDao.insert(fieldObj);
+								}catch(e:Error){
+									trace(e.getStackTrace());
+								}
 							}
 						}catch(e:TypeError){
 							//no FieldTranslation
@@ -146,7 +166,24 @@ package gadget.sync.incoming {
 			nextPage(currentTransaction == allTransactions.length);
 			return cnt;
 		}
-
+		protected function getDisplayName(fieldRec:Object,mapTrans:Dictionary):String{
+			var lang:String = LocaleService.getLanguageInfo().LanguageCode;
+			if(mapTrans.hasOwnProperty(lang)){
+				var text:String=	mapTrans[lang];
+				if(!StringUtils.isEmpty(text)){
+					return text;
+				}
+			}
+			return fieldRec.DisplayName;
+		}
+		
+		protected function getFieldType(fieldRec:Object):String{
+			if(StringUtil.beginsWith(fieldRec.FieldType,'Picklist')){
+				return 'Picklist'
+			}
+			
+			return fieldRec.FieldType;
+		}
 		override protected function handleRequestFault(soapAction:String, request:XML, response:XML, faultString:String, xml_list:XMLList, event:IOErrorEvent):Boolean {
 			//VAHI we do not have an error code here.
 			// So all we can do is to check for the exact string.

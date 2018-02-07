@@ -1,5 +1,7 @@
 package gadget.util {
 
+	import com.adobe.utils.StringUtil;
+	
 	import flash.display.DisplayObject;
 	
 	import flashx.textLayout.operations.PasteOperation;
@@ -977,7 +979,25 @@ package gadget.util {
 				}
 			}
 		}
-		
+		public static function getFieldDisplayName(entity:String,element_name:String):String{
+			
+			var obj:Object = getField(entity,element_name);
+			if(obj==null){
+				obj = getField(entity,element_name,false,true);
+			}
+			
+			if(obj!=null){
+				var display:String = obj.display_name;
+				if(StringUtils.startsWith(display,'[') && StringUtils.endsWith(display,']')){
+					display = display.substring(1,display.length-1);	
+				}
+				
+				return display;
+			}
+			
+			return element_name;
+			
+		}
 		private static function addValidationRuleError(validatorErrorArray:Array, errMsg:String):void {
 			var error:Object = new Object();
 			error.message = errMsg;

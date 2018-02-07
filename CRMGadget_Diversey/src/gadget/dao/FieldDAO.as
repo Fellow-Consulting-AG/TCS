@@ -4,6 +4,8 @@ package gadget.dao
 	import flash.data.SQLResult;
 	import flash.data.SQLStatement;
 	
+	import gadget.util.StringUtils;
+	
 	import mx.collections.ArrayCollection;
 	
 	
@@ -15,7 +17,7 @@ package gadget.dao
 		private var stmtFindFieldByPrimaryKey:SQLStatement;
 		private var stmtAllEntitiesList:SQLStatement;
 		private var stmtAllPicklists:SQLStatement;
-		
+		private var stmtFindByNameIgnoreCase:SQLStatement;
 		private var stmtFindField:SQLStatement;
 		
 		
@@ -57,6 +59,9 @@ package gadget.dao
 			
 			stmtFindField = new SQLStatement();
 			stmtFindField.sqlConnection = sqlConnection;
+			stmtFindByNameIgnoreCase = new SQLStatement();
+			stmtFindByNameIgnoreCase.text = "SELECT * FROM field WHERE entity = :entity AND element_name LIKE :element_name";
+			stmtFindByNameIgnoreCase.sqlConnection = sqlConnection;
 		}
 				
 		public function delete_fields(entity:Object):void {
@@ -130,6 +135,20 @@ package gadget.dao
 				return 0;
 			}
 			return 1;
+		}
+		
+		public function findFieldByNameIgnoreCase(entity:String,element_name:String):Object {	
+			if(StringUtils.unNull(entity).indexOf(Database.businessPlanDao.entity)!=-1){
+				entity = Database.businessPlanDao.entity;
+			}			
+			stmtFindByNameIgnoreCase.parameters[":entity"] = entity;
+			stmtFindByNameIgnoreCase.parameters[":element_name"] = element_name;
+			exec(stmtFindByNameIgnoreCase);
+			var result:SQLResult = stmtFindByNameIgnoreCase.getResult();
+			if (result.data == null || result.data.length == 0) {
+				return null;
+			}
+			return result.data[0];
 		}
 		
 	}

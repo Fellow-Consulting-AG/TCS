@@ -199,6 +199,8 @@
 			}
 			private function printServiceRequest(isPreview:Boolean):void{
 				var groupingWindow:GroupingPDF = new GroupingPDF();
+				groupingWindow.width=400;
+				groupingWindow.height=350
 				groupingWindow.isPreview = isPreview;
 //				itemSR = new Object();
 				for (var i:int = 0; i < fields.length; i++) {

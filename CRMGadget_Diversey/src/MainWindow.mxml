@@ -1525,6 +1525,8 @@
 			}
 			private function openGroupingWindow():void{
 				var goupingWindow:GroupingPDF = new GroupingPDF();
+				goupingWindow.width=700;
+				goupingWindow.height=500;
 				WindowManager.openModal(goupingWindow);
 			}
 			private function openTreeMapWindow():void{
