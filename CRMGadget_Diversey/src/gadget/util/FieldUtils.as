@@ -1013,6 +1013,7 @@ package gadget.util {
 			var data:ArrayCollection = Database.customObject1Dao.getWorkingHoursAndCost(srItem);
 			var val:Boolean = !StringUtils.isEmpty(srItem.CustomPickList7) && !StringUtils.isEmpty(srItem.CustomPickList12) && data.length > 0;
 			val = val && !(srItem.CustomPickList10 != 'SUSP' && srItem.CustomPickList10 != 'AWPT' && srItem.CustomPickList11 != 'TECO');
+			val=val&&!StringUtils.isEmpty(srItem.CustomInteger0+'');
 			return val;
 		}
 		
