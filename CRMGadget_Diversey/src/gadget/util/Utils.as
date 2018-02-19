@@ -1870,17 +1870,17 @@ package gadget.util {
 			
 			
 				//save custom header translate
-			Database.customFieldTranslatorDao.delete_({entity:'custom_header'});
-				commitObjects(Database.customFieldTranslatorDao,xml.elements("custom_headers").children(),true,function(obj:Object):void{
-					if(obj.hasOwnProperty('fieldName')){
-						obj['column_name']=obj['fieldName'];
-					}else{
-						//try without capital leter
-						obj['column_name']=obj['fieldname'];
-					}
-					obj['entity']='custom_header';
-				}
-			);
+//			Database.customFieldTranslatorDao.delete_({entity:'custom_header'});
+//				commitObjects(Database.customFieldTranslatorDao,xml.elements("custom_headers").children(),true,function(obj:Object):void{
+//					if(obj.hasOwnProperty('fieldName')){
+//						obj['column_name']=obj['fieldName'];
+//					}else{
+//						//try without capital leter
+//						obj['column_name']=obj['fieldname'];
+//					}
+//					obj['entity']='custom_header';
+//				}
+//			);
 			
 			if(reload!=null) reload();
 			

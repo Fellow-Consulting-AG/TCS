@@ -1019,7 +1019,7 @@
 						<depthstructuretree/>
 						<filter_translations/>
 						<report_admins/>
-						<custom_headers/>
+						//<custom_headers/>
 					</configuration>;
 				
 				for each(var obj:Object in Database.industryDAO.getDifferenceLanguage()) {
@@ -1442,7 +1442,7 @@
 				generateXML(configXml.elements("filter_translations"),"filter_translation",filterData);				
 				//---------------------- TCS Report Admin ----------------------------------------
 				exportReportAdmin(configXml);
-				exportCustomHeader(configXml);
+//				exportCustomHeader(configXml);
 				var f:File = new File();
 				buttonbardetail.enabled = false;
 				buttonsconfigure.enabled = false;

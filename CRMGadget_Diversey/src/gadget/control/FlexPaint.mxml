@@ -35,6 +35,12 @@
 			// var byteArray:ByteArray = (new PNGEncoder()).encode(bitmapData);	
 			// (new FileReference()).save(ba, "doodle.png");
 		}
+		protected function drawHandler():void{
+			btnOk.enabled=true;
+		}
+		protected function clearHandler():void{
+			btnOk.enabled=false;
+		}
 	</mx:Script>
 	
 	<mx:Boolean id="isDrawing">false</mx:Boolean>
@@ -87,11 +93,11 @@
 	
 	<mx:Panel id="p" title="Signature" top="5" horizontalCenter="0" width="320" height="275">
 		
-		<control:DrawingArea id="drawingArea" xmlns="*" width="100%" height="100%"/>
+		<control:DrawingArea id="drawingArea" drawHandler="{drawHandler}" clearHandler="{clearHandler}" xmlns="*" width="100%" height="100%" />
 		
 		<mx:ControlBar>
 			<mx:ColorPicker change="drawingArea.drawColor = event.target.selectedColor"/>
-			<mx:Button left="20" label="OK" width="70" click="save_clickHandler(event);" doubleClick="double_clickHandler(event);"/>
+			<mx:Button id="btnOk" left="20" label="OK" width="70" click="save_clickHandler(event);" enabled="false" doubleClick="double_clickHandler(event);"/>
 			<mx:Button label="Clear" width="70" click="drawingArea.erase();" doubleClick="double_clickHandler(event);"/>
 			<mx:Button label="Cancel" width="70" click="save_clickHandler(event,true);" doubleClick="double_clickHandler(event);"/> 
 			<!--s:Button label="Erase" click="drawingArea.erase()"/ >

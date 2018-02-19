@@ -20,7 +20,8 @@ package gadget.control
 		private var y1:int;
 		private var x2:int;
 		private var y2:int;
-		
+		public var drawHandler:Function ;
+		public var clearHandler:Function;
 		public var drawColor:uint = 0x000000;
 		
 		public function DrawingArea(){
@@ -71,6 +72,9 @@ package gadget.control
 					
 					x1 = x2;
 					y1 = y2;
+					if(drawHandler!=null){
+						drawHandler();
+					}
 				}
 				
 			});
@@ -87,6 +91,9 @@ package gadget.control
 			graphics.beginFill(0xffffff, 0.00001);
 			graphics.drawRect(0, 0, width, height);
 			graphics.endFill();
+			if(clearHandler!=null){
+				clearHandler();
+			}
 		}
 		
 		/*public function save():void

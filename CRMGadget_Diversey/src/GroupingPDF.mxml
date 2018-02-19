@@ -984,8 +984,8 @@
 			</mx:Canvas>
 			<mx:Canvas id="rateCanvas" width="100%">
 				<mx:VBox height="100%">		
-					<mx:Label fontWeight="bold" text="{getRateHeader()}"/>
-					<mx:Label text="{FieldUtils.getFieldDisplayName(Database.serviceDao.entity,'CustomPickList51')}"/>
+					<!--<mx:Label fontWeight="bold" text="{getRateHeader()}"/>-->
+					<mx:Label text="{FieldUtils.getFieldDisplayName(Database.serviceDao.entity,'CustomPickList51')}" />
 					<mx:ComboBox id="cboSatisfied" width="250" dataProvider="{PicklistService.getPicklist(Database.serviceDao.entity, 'CustomPickList51')}"/>
 					<mx:Label text="{FieldUtils.getFieldDisplayName(Database.serviceDao.entity,'CustomNote0')}"/>
 					<mx:TextArea id="txtImproveNote" height="100" width="250"/>					
