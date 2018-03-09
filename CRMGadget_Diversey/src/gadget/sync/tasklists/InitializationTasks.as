@@ -46,13 +46,14 @@ package gadget.sync.tasklists {
 		
 		var all:Array = [
 			new IncomingUser(),		
+			new IncomingCurrentUserData(),
 			new MetadataChangeService(),
 						
 			new CustomRecordTypeService(),
 //			//new IncomingSalesProcess(),			
 			new GetFields(),
 			new FieldManagementService(),
-			new IncomingCurrentUserData(),
+			
 //
 //			// Picklists in this sequence, not different.
 			new ReadPicklist(),

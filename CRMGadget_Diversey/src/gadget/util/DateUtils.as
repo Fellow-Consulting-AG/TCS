@@ -368,7 +368,7 @@ package gadget.util {
 			}
 			var userDatas:Object = Database.allUsersDao.ownerUser();
 			//var userDatas:ArrayCollection = Database.allUsersDao.findAll(new ArrayCollection([{element_name:"*"}]), "userSignInId = '" + currentUser.user_sign_in_id + "'");
-			if(userDatas!=null){				
+			if(userDatas!=null && userDatas.hasOwnProperty("Id")){				
 				var gmt:Number=0;
 				var uData:Object=userDatas;
 				var timeZone:String=uData['TimeZoneName'];
@@ -381,9 +381,15 @@ package gadget.util {
 				  
 				  var isNegative:Boolean=timeZone.substr(0,1)=="-";
 				 // timeZone=timeZone.replace(/+|-/,'');
+				  timeZone = timeZone.replace("h","");
+				  timeZone = StringUtils.replaceAll(timeZone," ","");
 				  var hourSecond:Array =timeZone.split(":");
 				  var hour:Number=parseInt(hourSecond[0]);
-				  var second:Number=parseInt(hourSecond[1])/60;
+				  var second:Number= 0;
+				  if(hourSecond.length>1){
+					  second=parseInt(hourSecond[1])/60;
+				  }
+				  
 				  if(isNegative){
 					  gmt=hour-second;
 				  }else{
