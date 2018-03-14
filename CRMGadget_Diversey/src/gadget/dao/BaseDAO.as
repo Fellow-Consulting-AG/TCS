@@ -520,6 +520,8 @@ package gadget.dao
 		
 		public function insert(object:Object, useCustomfield:Boolean=true):void {
 			object.deleted = false;
+			var stmtInsert:SQLStatement = new SQLStatement();
+			stmtInsert.sqlConnection = sqlConnection;
 			stmtInsert.text = insertQuery(useCustomfield);
 			execStatement(stmtInsert, object,useCustomfield);
 		}
@@ -561,6 +563,7 @@ package gadget.dao
 		
 		public function update(object:Object):void {
 			stmtUpdate.clearParameters();
+			
 			stmtUpdate.text = updateQuery() + " WHERE gadget_id = :gadget_id";
 			stmtUpdate.parameters[":gadget_id"] = object.gadget_id;
 			execStatement(stmtUpdate, object);
