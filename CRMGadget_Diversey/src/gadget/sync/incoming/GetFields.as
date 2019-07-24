@@ -1,6 +1,7 @@
 package gadget.sync.incoming {
 	import flash.events.Event;
 	import flash.events.IOErrorEvent;
+	import flash.utils.Dictionary;
 	
 	import gadget.dao.DAOUtils;
 	import gadget.dao.Database;
@@ -130,10 +131,12 @@ package gadget.sync.incoming {
 			FieldUtils.reset();
 			Database.begin();
 			Database.fieldDao.delete_fields(entity);
-			
+			var fieldExist:Dictionary = new Dictionary();
 			for each (var tmp:Object in tmpFieldsList) {
-				if (Database.checkField(tao.our_name, tmp.element_name)) {
+				
+				if (Database.checkField(tao.our_name, tmp.element_name) && !fieldExist.hasOwnProperty(tmp.element_name)) {
 					Database.fieldDao.insert(tmp);
+					fieldExist[tmp.element_name]=tmp.element_name;
 				}
 			}
 			if(entity=="Activity") Database.ycheckMissingField(); // add missing field (Owner, Address) into Activity
